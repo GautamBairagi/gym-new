@@ -16,21 +16,24 @@ export const createPlanService = async (data) => {
     "status",
     "description",
     "category",
-    "duration"
+    "duration",
   ];
 
   if (!data.name) throw { status: 400, message: "Plan name is required" };
 
   if (data.duration && !allowedDurations.includes(data.duration)) {
-    throw { status: 400, message: "Invalid duration. Allowed: Monthly, Yearly" };
+    throw {
+      status: 400,
+      message: "Invalid duration. Allowed: Monthly, Yearly",
+    };
   }
 
   // Duplicate check
-  const [exists] = await pool.promise().query(
-    "SELECT id FROM plan WHERE name = ?",
-    [data.name]
-  );
-  if (exists.length > 0) throw { status: 400, message: "Plan name already exists" };
+  const [exists] = await pool.query("SELECT id FROM plan WHERE name = ?", [
+    data.name,
+  ]);
+  if (exists.length > 0)
+    throw { status: 400, message: "Plan name already exists" };
 
   // Build insert query dynamically
   const fields = [];
@@ -52,10 +55,12 @@ export const createPlanService = async (data) => {
     values.push("ACTIVE");
   }
 
-  const [result] = await pool.promise().query(
-    `INSERT INTO plan (${fields.join(",")}) VALUES (${placeholders.join(",")})`,
-    values
-  );
+  const [result] = await pool.query(
+      `INSERT INTO plan (${fields.join(",")}) VALUES (${placeholders.join(
+        ","
+      )})`,
+      values
+    );
 
   return { id: result.insertId, ...data, status: data.status || "ACTIVE" };
 };
@@ -74,7 +79,7 @@ export const listPlansService = async (duration) => {
 
   query += " ORDER BY id DESC";
 
-  const [rows] = await pool.promise().query(query, params);
+  const [rows] = await pool.query(query, params);
   return rows;
 };
 
@@ -94,25 +99,27 @@ export const updatePlanService = async (id, data) => {
     "status",
     "description",
     "category",
-    "duration"
+    "duration",
   ];
 
   if (data.duration && !allowedDurations.includes(data.duration)) {
-    throw { status: 400, message: "Invalid duration. Allowed: Monthly, Yearly" };
+    throw {
+      status: 400,
+      message: "Invalid duration. Allowed: Monthly, Yearly",
+    };
   }
 
   // Check if plan exists
-  const [existingRows] = await pool.promise().query("SELECT * FROM plan WHERE id = ?", [id]);
-  if (existingRows.length === 0) throw { status: 404, message: "Plan not found" };
+  const [existingRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [id]);
+  if (existingRows.length === 0)
+    throw { status: 404, message: "Plan not found" };
   const existingPlan = existingRows[0];
 
   // Duplicate name check
   if (data.name) {
-    const [duplicateRows] = await pool.promise().query(
-      "SELECT id FROM plan WHERE name = ? AND id != ?",
-      [data.name, id]
-    );
-    if (duplicateRows.length > 0) throw { status: 400, message: "Plan name already exists" };
+    const [duplicateRows] = await pool.query("SELECT id FROM plan WHERE name = ? AND id != ?", [data.name, id]);
+    if (duplicateRows.length > 0)
+      throw { status: 400, message: "Plan name already exists" };
   }
 
   // Build update query dynamically
@@ -129,13 +136,10 @@ export const updatePlanService = async (id, data) => {
 
   values.push(id);
 
-  await pool.promise().query(
-    `UPDATE plan SET ${updates.join(", ")} WHERE id = ?`,
-    values
-  );
+  await pool.query(`UPDATE plan SET ${updates.join(", ")} WHERE id = ?`, values);
 
   // Return updated plan
-  const [updatedRows] = await pool.promise().query("SELECT * FROM plan WHERE id = ?", [id]);
+  const [updatedRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [id]);
   return updatedRows[0];
 };
 
@@ -144,28 +148,23 @@ export const updatePlanService = async (id, data) => {
  **************************************/
 export const deletePlanService = async (id) => {
   // Check plan exists
-  const [planRows] = await pool.promise().query(
-    "SELECT * FROM plan WHERE id = ?",
-    [id]
-  );
+  const [planRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [id]);
 
   if (planRows.length === 0) throw { status: 404, message: "Plan not found" };
   const plan = planRows[0];
 
   // Check for associated payments
-  const [paymentRows] = await pool.promise().query(
-    "SELECT id FROM payments WHERE planId = ?",
-    [id]
-  );
+  const [paymentRows] = await pool.query("SELECT id FROM payments WHERE planId = ?", [id]);
 
   if (paymentRows.length > 0) {
     throw {
       status: 400,
-      message: "This plan has payments. You cannot delete it. Please mark it as INACTIVE instead."
+      message:
+        "This plan has payments. You cannot delete it. Please mark it as INACTIVE instead.",
     };
   }
 
   // Delete plan
-  await pool.promise().query("DELETE FROM plan WHERE id = ?", [id]);
+  await pool.query("DELETE FROM plan WHERE id = ?", [id]);
   return { message: "Plan deleted successfully" };
 };
