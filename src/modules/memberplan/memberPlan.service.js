@@ -2,20 +2,25 @@ import { pool } from "../../config/db.js";
 
 // CREATE
 export const saveMemberPlan = async (payload) => {
-  const { planName, sessions, validity, price, adminId } = payload;
+  const { name, sessions, validityDays, price, type, adminId } = payload;
 
   if (!adminId) throw { status: 400, message: "adminId is required" };
 
   const [result] = await pool.query(
     `INSERT INTO memberplan 
       (name, sessions, validityDays, price, type, adminId)
-     VALUES (?, ?, ?, ?, 'GROUP', ?)`,
-    [planName, Number(sessions), Number(validity), Number(price), Number(adminId)]
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [name, sessions, validityDays, price, type, adminId]
   );
 
-  const [plan] = await pool.query(`SELECT * FROM memberplan WHERE id = ?`, [result.insertId]);
+  const [plan] = await pool.query(
+    `SELECT * FROM memberplan WHERE id = ?`,
+    [result.insertId]
+  );
+
   return plan[0];
 };
+
 
 // GET ALL – for a particular admin
 export const getAllMemberPlans = async (adminId) => {
