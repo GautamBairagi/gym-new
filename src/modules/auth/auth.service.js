@@ -71,9 +71,54 @@ export const registerUser = async (data) => {
 /**************************************
  * LOGIN USER
  **************************************/
+// export const loginUser = async ({ email, password }) => {
+//   const sql = `
+//     SELECT u.*, r.roleId AS roleName, b.name AS branchName
+//     FROM user u
+//     LEFT JOIN role r ON r.id = u.roleId
+//     LEFT JOIN branch b ON b.id = u.branchId
+//     WHERE u.email = ?
+//   `;
+
+//   const [rows] = await pool.query(sql, [email]);
+//   const user = rows[0];
+//   if (!user) throw { status: 400, message: "User not found" };
+
+//   const match = await bcrypt.compare(password, user.password);
+//   if (!match) throw { status: 401, message: "Invalid password" };
+
+//   const token = jwt.sign(
+//     {
+//       id: user.id,
+//       role: user.roleId,
+//       branchId: user.branchId,
+//     },
+//     ENV.jwtSecret,
+//     { expiresIn: "7d" }
+//   );
+
+//   return {
+//     token,
+//     user: {
+//       id: user.id,
+//       fullName: user.fullName,
+//       email: user.email,
+//       phone: user.phone,
+//       role: user.roleId,
+//       branchId: user.branchId,
+//       branchName: user.branchName,
+//     }
+//   };
+// };
+
+
 export const loginUser = async ({ email, password }) => {
+
   const sql = `
-    SELECT u.*, r.name AS roleName, b.name AS branchName
+    SELECT 
+      u.*,
+      r.name AS roleName,
+      b.name AS branchName
     FROM user u
     LEFT JOIN role r ON r.id = u.roleId
     LEFT JOIN branch b ON b.id = u.branchId
@@ -82,6 +127,7 @@ export const loginUser = async ({ email, password }) => {
 
   const [rows] = await pool.query(sql, [email]);
   const user = rows[0];
+
   if (!user) throw { status: 400, message: "User not found" };
 
   const match = await bcrypt.compare(password, user.password);
@@ -90,7 +136,7 @@ export const loginUser = async ({ email, password }) => {
   const token = jwt.sign(
     {
       id: user.id,
-      role: user.roleName,
+      roleId: user.roleId,
       branchId: user.branchId,
     },
     ENV.jwtSecret,
@@ -104,12 +150,14 @@ export const loginUser = async ({ email, password }) => {
       fullName: user.fullName,
       email: user.email,
       phone: user.phone,
-      role: user.roleName,
+      roleId: user.roleId,
+      roleName: user.roleName,
       branchId: user.branchId,
       branchName: user.branchName,
     }
   };
 };
+
 
 
 /**************************************
