@@ -76,24 +76,36 @@ export const getDashboardStats = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const data = await loginUser(req.body);
+    const { email, password } = req.body;
+
+    const { token, user } = await loginUser({ email, password });
+
     res.json({
       success: true,
-      token: data.token,
+      token,
       user: {
-        id: data.user.id,
-        fullName: data.user.fullName,
-        email: data.user.email,
-        phone: data.user.phone,
-        role: data.user.role.name || null,
-        branchId: data.user.branchId,
-        branchName: data.user.branch?.name || null,
-      },
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+
+        // FIXED ROLE FIELDS
+        roleId: user.roleId,
+        roleName: user.roleName,
+
+        branchId: user.branchId,
+        branchName: user.branchName
+      }
     });
+
   } catch (err) {
     next(err);
   }
 };
+
+
+
+
 
 
 export const loginMember = async (req, res, next) => {
