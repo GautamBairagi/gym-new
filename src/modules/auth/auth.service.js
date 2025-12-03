@@ -28,7 +28,7 @@ export const registerUser = async (data) => {
   }
 
   // Check email
-  const [ex] = await pool.promise().query(
+  const [ex] = await pool.query(
     "SELECT id FROM user WHERE email = ?",
     [email]
   );
@@ -44,7 +44,7 @@ export const registerUser = async (data) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  const [result] = await pool.promise().query(sql, [
+  const [result] = await pool.query(sql, [
     fullName, email, hash, phone, roleId, branchId,
     gymName, address, planName, price, duration, description, status
   ]);
@@ -80,7 +80,7 @@ export const loginUser = async ({ email, password }) => {
     WHERE u.email = ?
   `;
 
-  const [rows] = await pool.promise().query(sql, [email]);
+  const [rows] = await pool.query(sql, [email]);
   const user = rows[0];
   if (!user) throw { status: 400, message: "User not found" };
 
@@ -123,7 +123,7 @@ export const fetchUserById = async (id) => {
     LEFT JOIN branch b ON b.id = u.branchId
     WHERE u.id = ?
   `;
-  const [rows] = await pool.promise().query(sql, [id]);
+  const [rows] = await pool.query(sql, [id]);
 
   if (rows.length === 0) throw { status: 404, message: "User not found" };
 
@@ -147,7 +147,7 @@ export const modifyUser = async (id, data) => {
     WHERE id=?
   `;
 
-  await pool.promise().query(sql, [
+  await pool.query(sql, [
     data.fullName,
     data.email,
     data.phone,
@@ -172,7 +172,7 @@ export const modifyUser = async (id, data) => {
  * DELETE USER
  **************************************/
 export const removeUser = async (id) => {
-  await pool.promise().query("DELETE FROM user WHERE id = ?", [id]);
+  await pool.query("DELETE FROM user WHERE id = ?", [id]);
   return true;
 };
 
@@ -188,7 +188,7 @@ export const fetchAdmins = async () => {
     WHERE u.roleId = 2
   `;
 
-  const [rows] = await pool.promise().query(sql);
+  const [rows] = await pool.query(sql);
   return rows;
 };
 
@@ -197,15 +197,15 @@ export const fetchAdmins = async () => {
  * DASHBOARD STATS
  **************************************/
 export const fetchDashboardStats = async () => {
-  const [[{ totalAdmins }]] = await pool.promise().query(
+  const [[{ totalAdmins }]] = await pool.query(
     "SELECT COUNT(*) AS totalAdmins FROM user WHERE roleId = 2"
   );
 
-  const [[{ totalBranches }]] = await pool.promise().query(
+  const [[{ totalBranches }]] = await pool.query(
     "SELECT COUNT(*) AS totalBranches FROM branch"
   );
 
-  const [[{ newUsersToday }]] = await pool.promise().query(
+  const [[{ newUsersToday }]] = await pool.query(
     "SELECT COUNT(*) AS newUsersToday FROM user WHERE DATE(createdAt) = CURDATE()"
   );
 
@@ -224,7 +224,7 @@ export const loginMemberService = async ({ email, password }) => {
     WHERE m.email = ?
   `;
 
-  const [rows] = await pool.promise().query(sql, [email]);
+  const [rows] = await pool.query(sql, [email]);
   const member = rows[0];
 
   if (!member) throw { status: 400, message: "Invalid email or password" };

@@ -2,7 +2,7 @@ import mysql from 'mysql2';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Make **promise pool directly**
+// Create a **Promise Pool directly**
 export const pool = mysql
   .createPool({
     host: "localhost",
@@ -14,17 +14,14 @@ export const pool = mysql
     connectionLimit: 10,
     queueLimit: 0,
   })
-  .promise();  // <<< THIS IS THE FIX
+  .promise();  // 🔥 THIS MAKES pool.query() RETURN A PROMISE
 
 // Test MySQL connection
 pool.getConnection()
   .then((connection) => {
-    console.log('✅ MySQL connected successfully!');
+    console.log("✅ MySQL connected successfully!");
     connection.release();
   })
   .catch((err) => {
-    console.error('❌ MySQL connection failed:', err.message);
+    console.error("❌ MySQL connection failed:", err.message);
   });
-
-// Remove `db` export (no need)
-// export const db = pool.promise();  // ❌ REMOVE
