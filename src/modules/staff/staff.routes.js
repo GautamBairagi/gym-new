@@ -1,0 +1,74 @@
+
+
+
+import { Router } from "express";
+import {
+  createStaff,
+  listStaff,
+  staffDetail,
+  updateStaff,
+  deleteStaff,
+} from "./staff.controller.js";
+import { verifyToken } from "../../middlewares/auth.js";
+
+const router = Router();
+
+/**
+ * 👉 Create Staff
+ */
+router.post(
+  "/create",
+  verifyToken(["Superadmin", "Admin"]),
+  createStaff
+);
+
+/**
+ * 👉 List Staff by Branch
+ * 🛑 Prevent Admin accessing other branches
+ */
+router.get(
+  "/branch/:branchId",
+  verifyToken(["Superadmin", "Admin"]),
+  (req, res, next) => {
+    if (req.user.role === "Admin") {
+      // Force admin to their own branch
+      req.params.branchId = req.user.branchId.toString();
+    }
+    next();
+  },
+  listStaff
+);
+
+/**
+ * 👉 Get Single Staff Details
+ * 🛑 Admin can view only staff of their own branch
+ */
+router.get(
+  "/detail/:id",
+  verifyToken(["Superadmin", "Admin"]),
+  (req, res, next) => {
+    req.checkBranch = true; // custom flag for controller -> optional use
+    next();
+  },
+  staffDetail
+);
+
+/**
+ * 👉 Edit Staff
+ */
+router.put(
+  "/update/:id",
+  verifyToken(["Superadmin", "Admin"]),
+  updateStaff
+);
+
+/**
+ * 👉 Soft Delete
+ */
+router.delete(
+  "/delete/:id",
+  verifyToken(["Superadmin", "Admin"]),
+  deleteStaff
+);
+
+export default router;

@@ -1,0 +1,76 @@
+import { pool } from "../../config/db.js";
+
+// CREATE
+export const saveMemberPlan = async (payload) => {
+  const { planName, sessions, validity, price, adminId } = payload;
+
+  if (!adminId) throw { status: 400, message: "adminId is required" };
+
+  const [result] = await pool.query(
+    `INSERT INTO memberplan 
+      (name, sessions, validityDays, price, type, adminId)
+     VALUES (?, ?, ?, ?, 'GROUP', ?)`,
+    [planName, Number(sessions), Number(validity), Number(price), Number(adminId)]
+  );
+
+  const [plan] = await pool.query(`SELECT * FROM memberplan WHERE id = ?`, [result.insertId]);
+  return plan[0];
+};
+
+// GET ALL – for a particular admin
+export const getAllMemberPlans = async (adminId) => {
+  const [plans] = await pool.query(
+    `SELECT * FROM memberplan WHERE adminId = ? ORDER BY id DESC`,
+    [Number(adminId)]
+  );
+  return plans;
+};
+
+// GET ALL via request handler
+export const getMemberPlansByAdminIdService = async (adminId) => {
+  const [rows] = await pool.promise().query(
+    `SELECT 
+        id,
+        name,
+        sessions,
+        validityDays,
+        price,
+        type,
+        adminId,
+        createdAt,
+        updatedAt
+     FROM memberplan
+     WHERE adminId = ?
+     ORDER BY id DESC`,
+    [adminId]
+  );
+
+  return rows;
+};
+
+
+// GET BY ID
+export const getMemberPlanById = async (id) => {
+  const [plans] = await pool.query(`SELECT * FROM memberplan WHERE id = ?`, [id]);
+  if (!plans[0]) throw { status: 404, message: "Member plan not found" };
+  return plans[0];
+};
+
+// UPDATE
+export const updateMemberPlan = async (id, payload) => {
+  await pool.query(
+    `UPDATE memberplan 
+     SET name = ?, sessions = ?, validityDays = ?, price = ?
+     WHERE id = ?`,
+    [payload.planName, Number(payload.sessions), Number(payload.validity), Number(payload.price), id]
+  );
+
+  const [updated] = await pool.query(`SELECT * FROM memberplan WHERE id = ?`, [id]);
+  return updated[0];
+};
+
+// DELETE
+export const deleteMemberPlan = async (id) => {
+  await pool.query(`DELETE FROM memberplan WHERE id = ?`, [id]);
+  return true;
+};
