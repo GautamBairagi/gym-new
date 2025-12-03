@@ -44,22 +44,22 @@ export const createSalaryService = async (data) => {
 // ===== GET ALL =====
 // ===== GET ALL =====
 export const getAllSalariesService = async () => {
-  const [rows] = await pool.query(
-    `SELECT 
-        s.*, 
-        st.full_name AS fullName
-     FROM Salary s
-     LEFT JOIN Staff st ON s.staffId = st.id
-     ORDER BY s.id DESC`
-  );
+  const sql = `
+    SELECT 
+      s.*,
+      u.fullName AS staffName,
+      u.email AS staffEmail,
+      u.phone AS staffPhone,
+      st.gender,
+      st.joinDate
+    FROM salary s
+    LEFT JOIN staff st ON s.staffId = st.id
+    LEFT JOIN user u ON st.userId = u.id
+    ORDER BY s.id DESC
+  `;
 
-  const formatted = rows.map((row) => ({
-      ...row,
-      bonuses: row.bonuses ? JSON.parse(row.bonuses) : [],
-      deductions: row.deductions ? JSON.parse(row.deductions) : []
-  }));
-
-  return formatted;
+  const [rows] = await pool.query(sql);
+  return rows;
 };
 
 // ===== GET BY ID =====

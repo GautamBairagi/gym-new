@@ -26,7 +26,7 @@ export const createMemberService = async (data) => {
   }
 
   // Check duplicates (email / phone)
-  const [exists] = await pool.promise().query(
+  const [exists] = await pool.query(
     "SELECT id FROM member WHERE email = ? OR phone = ?",
     [email, phone || ""]
   );
@@ -37,7 +37,7 @@ export const createMemberService = async (data) => {
   let endDate = null;
 
   if (planId) {
-    const [planRows] = await pool.promise().query(
+    const [planRows] = await pool.query(
       "SELECT * FROM plan WHERE id = ?",
       [planId]
     );
@@ -50,7 +50,7 @@ export const createMemberService = async (data) => {
   }
 
   // Insert member
-  const [result] = await pool.promise().query(
+  const [result] = await pool.query(
   `INSERT INTO member
     (fullName, email, password, phone, planId, membershipFrom, membershipTo, dateOfBirth, paymentMode, amountPaid, branchId, gender, interestedIn, address, adminId, status)
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`,
@@ -95,7 +95,7 @@ export const listMembersService = async (branchId, page = 1, limit = 20, search 
   query += " ORDER BY id DESC LIMIT ? OFFSET ?";
   params.push(limit, offset);
 
-  const [items] = await pool.promise().query(query, params);
+  const [items] = await pool.query(query, params);
 
   // Count total
   let countQuery = "SELECT COUNT(*) as total FROM member WHERE branchId = ?";
@@ -104,7 +104,7 @@ export const listMembersService = async (branchId, page = 1, limit = 20, search 
     countQuery += " AND (fullName LIKE ? OR email LIKE ? OR phone LIKE ?)";
     countParams.push(`%${search}%`, `%${search}%`, `%${search}%`);
   }
-  const [countRows] = await pool.promise().query(countQuery, countParams);
+  const [countRows] = await pool.query(countQuery, countParams);
   const total = countRows[0].total;
 
   return {
@@ -120,7 +120,7 @@ export const listMembersService = async (branchId, page = 1, limit = 20, search 
  * MEMBER DETAIL
  **************************************/
 export const memberDetailService = async (id) => {
-  const [rows] = await pool.promise().query(
+  const [rows] = await pool.query(
     "SELECT * FROM member WHERE id = ?",
     [id]
   );
@@ -152,7 +152,7 @@ export const updateMemberService = async (id, data) => {
 
   // Duplicate check
   if (email || phone) {
-    const [exists] = await pool.promise().query(
+    const [exists] = await pool.query(
       "SELECT id FROM member WHERE (email = ? OR phone = ?) AND id != ?",
       [email || "", phone || "", id]
     );
@@ -164,7 +164,7 @@ export const updateMemberService = async (id, data) => {
   let endDate = undefined;
 
   if (planId && startDate) {
-    const [planRows] = await pool.promise().query("SELECT * FROM plan WHERE id = ?", [planId]);
+    const [planRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [planId]);
     const plan = planRows[0];
     if (!plan) throw { status: 404, message: "Invalid plan selected" };
     const durationDays = Number(plan.duration) || 0;
@@ -173,7 +173,7 @@ export const updateMemberService = async (id, data) => {
   }
 
   // Update member
-  await pool.promise().query(
+  await pool.query(
   `UPDATE member SET
     fullName = ?,
     email = ?,
@@ -218,7 +218,7 @@ export const updateMemberService = async (id, data) => {
  * DELETE (SOFT DELETE)
  **************************************/
 export const deleteMemberService = async (id) => {
-  await pool.promise().query(
+  await pool.query(
     "UPDATE member SET status = 'Inactive' WHERE id = ?",
     [id]
   );
@@ -232,7 +232,7 @@ export const deleteMemberService = async (id) => {
 
 // ===== GET MEMBERS BY ADMIN ID =====
 export const getMembersByAdminIdService = async (adminId) => {
-  const [rows] = await pool.promise().query(
+  const [rows] = await pool.query(
     `SELECT 
         id,
         adminId,
