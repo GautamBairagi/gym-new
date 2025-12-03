@@ -21,14 +21,14 @@ export const createStaffService = async (data) => {
   } = data;
 
   // check duplicate email
-  const [exists] = await pool.promise().query(
+  const [exists] = await pool.query(
     "SELECT id FROM user WHERE email = ?",
     [email]
   );
   if (exists.length > 0) throw { status: 400, message: "Email already exists" };
 
   // insert staff user
-  const [result] = await pool.promise().query(
+  const [result] = await pool.query(
     `INSERT INTO user 
       (fullName, email, phone, password, roleId, branchId) 
      VALUES (?, ?, ?, ?, ?, ?)`,
@@ -38,7 +38,7 @@ export const createStaffService = async (data) => {
   const userId = result.insertId;
 
   // insert staff details
-  await pool.promise().query(
+  await pool.query(
     `INSERT INTO staff 
       (userId, adminId, branchId, gender, dateOfBirth, joinDate, exitDate, profilePhoto) 
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -68,7 +68,7 @@ export const listStaffService = async (branchId) => {
     WHERE u.branchId = ?
     ORDER BY u.id DESC
   `;
-  const [rows] = await pool.promise().query(sql, [branchId]);
+  const [rows] = await pool.query(sql, [branchId]);
   return rows;
 };
 
@@ -82,7 +82,7 @@ export const staffDetailService = async (id) => {
     LEFT JOIN staff s ON u.id = s.userId
     WHERE u.id = ?
   `;
-  const [rows] = await pool.promise().query(sql, [id]);
+  const [rows] = await pool.query(sql, [id]);
   if (rows.length === 0) throw { status: 404, message: "Staff not found" };
   return rows[0];
 };
@@ -108,7 +108,7 @@ export const updateStaffService = async (id, data) => {
 
   // check duplicate email
   if (email) {
-    const [exists] = await pool.promise().query(
+    const [exists] = await pool.query(
       "SELECT id FROM user WHERE email = ? AND id != ?",
       [email, id]
     );
@@ -116,7 +116,7 @@ export const updateStaffService = async (id, data) => {
   }
 
   // update user table
-  await pool.promise().query(
+  await pool.query(
     `UPDATE user SET 
       fullName=?, email=?, phone=?, password=IFNULL(?, password), roleId=?, branchId=? 
      WHERE id=?`,
@@ -132,7 +132,7 @@ export const updateStaffService = async (id, data) => {
   );
 
   // update staff table
-  await pool.promise().query(
+  await pool.query(
     `UPDATE staff SET 
       adminId=?, gender=?, dateOfBirth=?, joinDate=?, exitDate=?, profilePhoto=? 
      WHERE userId=?`,
@@ -155,11 +155,11 @@ export const updateStaffService = async (id, data) => {
  **************************************/
 export const deleteStaffService = async (id) => {
   // soft delete user and staff
-  await pool.promise().query(
+  await pool.query(
     `UPDATE user SET status='Inactive' WHERE id=?`,
     [id]
   );
-  await pool.promise().query(
+  await pool.query(
     `UPDATE staff SET status='Inactive', exitDate=? WHERE userId=?`,
     [new Date(), id]
   );

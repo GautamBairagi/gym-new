@@ -30,7 +30,7 @@ import sessionRoutes from "../modules/session/session.routes.js";
 import  MemberPlan  from "../modules/memberplan/memberPlan.routes.js";
 import salaryRoutes from "../modules/salary/salary.routes.js";
 
-
+import  SalaryRoutes from "../modules/salary/salary.routes.js";
 
 
 
