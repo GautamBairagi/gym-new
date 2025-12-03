@@ -42,20 +42,30 @@ export const createSalaryService = async (data) => {
 };
 
 // ===== GET ALL =====
+// ===== GET ALL =====
 export const getAllSalariesService = async () => {
   const [rows] = await pool.query(
-    `SELECT s.*, st.fullName 
-     FROM Salary s 
+    `SELECT 
+        s.*, 
+        st.full_name AS fullName
+     FROM Salary s
      LEFT JOIN Staff st ON s.staffId = st.id
      ORDER BY s.id DESC`
   );
-  return rows;
+
+  const formatted = rows.map((row) => ({
+      ...row,
+      bonuses: row.bonuses ? JSON.parse(row.bonuses) : [],
+      deductions: row.deductions ? JSON.parse(row.deductions) : []
+  }));
+
+  return formatted;
 };
 
 // ===== GET BY ID =====
 export const getSalaryByIdService = async (id) => {
   const [rows] = await pool.query(
-    `SELECT s.*, st.fullName 
+    `SELECT s.*, st.full_name AS fullName
      FROM Salary s 
      LEFT JOIN Staff st ON s.staffId = st.id
      WHERE s.id = ?`,
@@ -63,8 +73,13 @@ export const getSalaryByIdService = async (id) => {
   );
 
   if (!rows.length) throw new Error("Salary not found");
-  return rows[0];
+  // parse bonuses/deductions if needed
+  const row = rows[0];
+  row.bonuses = row.bonuses ? JSON.parse(row.bonuses) : [];
+  row.deductions = row.deductions ? JSON.parse(row.deductions) : [];
+  return row;
 };
+
 
 // ===== DELETE =====
 export const deleteSalaryService = async (id) => {
@@ -114,7 +129,7 @@ export const updateSalaryService = async (id, data) => {
 // ===== GET BY STAFF ID =====
 export const getSalaryByStaffIdService = async (staffId) => {
   const [rows] = await pool.query(
-    `SELECT s.*, st.fullName 
+    `SELECT s.*, st.full_name AS fullName
      FROM Salary s
      LEFT JOIN Staff st ON s.staffId = st.id
      WHERE s.staffId = ?
@@ -123,5 +138,11 @@ export const getSalaryByStaffIdService = async (staffId) => {
   );
 
   if (!rows.length) throw new Error("No salary records found for this staff");
-  return rows;
+
+  return rows.map(row => ({
+    ...row,
+    bonuses: row.bonuses ? JSON.parse(row.bonuses) : [],
+    deductions: row.deductions ? JSON.parse(row.deductions) : []
+  }));
 };
+

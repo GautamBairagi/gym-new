@@ -26,9 +26,14 @@ export const getAllSalaries = async (req, res) => {
     const data = await getAllSalariesService();
     return res.json({ success: true, data });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    console.error("Get All Salaries Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Something went wrong"
+    });
   }
 };
+
 
 // ====== GET BY ID ======
 export const getSalaryById = async (req, res) => {
