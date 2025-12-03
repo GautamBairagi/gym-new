@@ -42,29 +42,59 @@ export const createSalaryService = async (data) => {
 };
 
 // ===== GET ALL =====
+// export const getAllSalariesService = async () => {
+//   const [rows] = await pool.query(
+//     `SELECT s.*, st.fullName 
+//      FROM Salary s 
+//      LEFT JOIN Staff st ON s.staffId = st.id
+//      ORDER BY s.id DESC`
+//   );
+//   return rows;
+// };
+
 export const getAllSalariesService = async () => {
-  const [rows] = await pool.query(
-    `SELECT s.*, st.fullName 
-     FROM Salary s 
-     LEFT JOIN Staff st ON s.staffId = st.id
-     ORDER BY s.id DESC`
-  );
+  const sql = `
+    SELECT 
+      s.*,
+      u.fullName AS staffName,
+      u.email AS staffEmail,
+      u.phone AS staffPhone,
+      st.gender,
+      st.joinDate
+    FROM salary s
+    LEFT JOIN staff st ON s.staffId = st.id
+    LEFT JOIN user u ON st.userId = u.id
+    ORDER BY s.id DESC
+  `;
+
+  const [rows] = await pool.query(sql);
   return rows;
 };
 
+
 // ===== GET BY ID =====
 export const getSalaryByIdService = async (id) => {
-  const [rows] = await pool.query(
-    `SELECT s.*, st.fullName 
-     FROM Salary s 
-     LEFT JOIN Staff st ON s.staffId = st.id
-     WHERE s.id = ?`,
-    [id]
-  );
+  const sql = `
+    SELECT 
+      s.*,
+      u.fullName AS staffName,
+      u.email AS staffEmail,
+      u.phone AS staffPhone,
+      st.gender,
+      st.joinDate
+    FROM salary s
+    LEFT JOIN staff st ON s.staffId = st.id
+    LEFT JOIN user u ON st.userId = u.id
+    WHERE s.id = ?
+  `;
+
+  const [rows] = await pool.query(sql, [id]);
 
   if (!rows.length) throw new Error("Salary not found");
+
   return rows[0];
 };
+
 
 // ===== DELETE =====
 export const deleteSalaryService = async (id) => {
@@ -113,15 +143,24 @@ export const updateSalaryService = async (id, data) => {
 
 // ===== GET BY STAFF ID =====
 export const getSalaryByStaffIdService = async (staffId) => {
-  const [rows] = await pool.query(
-    `SELECT s.*, st.fullName 
-     FROM Salary s
-     LEFT JOIN Staff st ON s.staffId = st.id
-     WHERE s.staffId = ?
-     ORDER BY s.id DESC`,
-    [staffId]
-  );
+  const sql = `
+    SELECT 
+      s.*,
+      u.fullName AS staffName,
+      u.email AS staffEmail,
+      u.phone AS staffPhone,
+      st.gender,
+      st.joinDate
+    FROM salary s
+    LEFT JOIN staff st ON s.staffId = st.id
+    LEFT JOIN user u ON st.userId = u.id
+    WHERE s.staffId = ?
+    ORDER BY s.id DESC
+  `;
+
+  const [rows] = await pool.query(sql, [staffId]);
 
   if (!rows.length) throw new Error("No salary records found for this staff");
+
   return rows;
 };
