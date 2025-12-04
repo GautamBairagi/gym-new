@@ -7,6 +7,7 @@ import {
   staffDetailService,
   updateStaffService,
   deleteStaffService,
+  getAllStaffService
 } from "./staff.service.js";
 import bcrypt from "bcryptjs";
 
@@ -121,17 +122,21 @@ export const staffDetail = async (req, res, next) => {
 
 export const updateStaff = async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
+    const staffId = parseInt(req.params.id);   // Only ID needed from params
     const data = req.body;
 
+    // Hash password if provided in body
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 10);
     }
 
-    // logged admin updating → update adminId also (optional)
-    data.adminId = req.user.id;
+    // Auto set adminId (safe)
+    if (req.user && req.user.id) {
+  data.adminId = req.user.id;
+}
 
-    const staff = await updateStaffService(id, data);
+
+    const staff = await updateStaffService(staffId, data);
 
     res.json({
       success: true,
@@ -143,6 +148,20 @@ export const updateStaff = async (req, res, next) => {
   }
 };
 
+export const getAllStaff = async (req, res, next) => {
+  try {
+    const staff = await getAllStaffService();
+
+    res.json({
+      success: true,
+      staff,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 export const deleteStaff = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
@@ -151,6 +170,21 @@ export const deleteStaff = async (req, res, next) => {
     res.json({
       success: true,
       message: "Staff deactivated successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAdminStaff = async (req, res, next) => {
+  try {
+    const adminId = req.user.id;  // Logged admin ka ID
+
+    const staff = await getAdminStaffService(adminId);
+
+    res.json({
+      success: true,
+      staff,
     });
   } catch (err) {
     next(err);

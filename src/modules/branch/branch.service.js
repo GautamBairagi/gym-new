@@ -8,21 +8,21 @@ export const createBranchService = async ({ name, address, phone, status, adminI
   if (!adminId) throw { status: 400, message: "Admin ID is required" };
 
   // Check unique branch name
-  const [exists] = await pool.promise().query(
+  const [exists] = await pool.query(
     "SELECT id FROM branch WHERE name = ?",
     [name]
   );
   if (exists.length > 0) throw { status: 400, message: "Branch name already exists" };
 
   // Check admin exists
-  const [adminExists] = await pool.promise().query(
+  const [adminExists] = await pool.query(
     "SELECT id FROM user WHERE id = ? AND roleId = 2", // assuming 2 = Admin
     [adminId]
   );
   if (adminExists.length === 0) throw { status: 404, message: "Admin not found" };
 
   // Insert branch
-  const [result] = await pool.promise().query(
+  const [result] = await pool.query(
     `INSERT INTO branch (name, address, phone, status, adminId)
      VALUES (?, ?, ?, ?, ?)`,
     [name, address || null, phone || null, status === "INACTIVE" ? "INACTIVE" : "ACTIVE", adminId]
@@ -36,7 +36,7 @@ export const createBranchService = async ({ name, address, phone, status, adminI
  * LIST ALL BRANCHES
  **************************************/
 export const listBranchesService = async () => {
-  const [rows] = await pool.promise().query(
+  const [rows] = await pool.query(
     `SELECT b.*, u.fullName AS adminName 
      FROM branch b 
      LEFT JOIN user u ON b.adminId = u.id 
@@ -52,7 +52,7 @@ export const getBranchByIdService = async (id) => {
   const branchId = Number(id);
   if (!branchId) throw { status: 400, message: "Invalid branch id" };
 
-  const [rows] = await pool.promise().query(
+  const [rows] = await pool.query(
     "SELECT * FROM branch WHERE id = ?",
     [branchId]
   );
@@ -65,7 +65,7 @@ export const getBranchByIdService = async (id) => {
  * GET BRANCH BY ADMIN ID
  **************************************/
 export const getBranchByAdminIdService = async (adminId) => {
-  const [rows] = await pool.promise().query(
+  const [rows] = await pool.query(
     "SELECT * FROM branch WHERE adminId = ?",
     [Number(adminId)]
   );
@@ -80,7 +80,7 @@ export const updateBranchService = async (id, data) => {
   if (!branchId) throw { status: 400, message: "Invalid branch id" };
 
   // Check exists
-  const [existingRows] = await pool.promise().query(
+  const [existingRows] = await pool.query(
     "SELECT * FROM branch WHERE id = ?",
     [branchId]
   );
@@ -89,7 +89,7 @@ export const updateBranchService = async (id, data) => {
 
   // Check duplicate name
   if (data.name) {
-    const [dup] = await pool.promise().query(
+    const [dup] = await pool.query(
       "SELECT id FROM branch WHERE name = ? AND id != ?",
       [data.name, branchId]
     );
@@ -98,7 +98,7 @@ export const updateBranchService = async (id, data) => {
 
   // Check adminId valid
   if (data.adminId) {
-    const [adminExists] = await pool.promise().query(
+    const [adminExists] = await pool.query(
       "SELECT id FROM user WHERE id = ? AND roleId = 2",
       [data.adminId]
     );
@@ -106,7 +106,7 @@ export const updateBranchService = async (id, data) => {
   }
 
   // Update
-  const [result] = await pool.promise().query(
+  const [result] = await pool.query(
     `UPDATE branch SET 
        name = ?, 
        address = ?, 
@@ -135,9 +135,9 @@ export const deleteBranchService = async (id) => {
   if (!branchId) throw { status: 400, message: "Invalid branch id" };
 
   // Check exists
-  const [existing] = await pool.promise().query("SELECT id FROM branch WHERE id = ?", [branchId]);
+  const [existing] = await pool.query("SELECT id FROM branch WHERE id = ?", [branchId]);
   if (existing.length === 0) throw { status: 404, message: "Branch not found" };
 
-  await pool.promise().query("DELETE FROM branch WHERE id = ?", [branchId]);
+  await pool.query("DELETE FROM branch WHERE id = ?", [branchId]);
   return { message: "Branch deleted successfully" };
 };

@@ -150,11 +150,15 @@ export const deletePlanService = async (id) => {
   // Check plan exists
   const [planRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [id]);
 
-  if (planRows.length === 0) throw { status: 404, message: "Plan not found" };
-  const plan = planRows[0];
+  if (planRows.length === 0) {
+    throw { status: 404, message: "Plan not found" };
+  }
 
-  // Check for associated payments
-  const [paymentRows] = await pool.query("SELECT id FROM payments WHERE planId = ?", [id]);
+  // ✅ Sahi table name: payment (singular)
+  const [paymentRows] = await pool.query(
+    "SELECT id FROM payment WHERE planId = ?",
+    [id]
+  );
 
   if (paymentRows.length > 0) {
     throw {
