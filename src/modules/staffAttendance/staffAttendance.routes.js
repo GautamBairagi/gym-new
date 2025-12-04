@@ -1,6 +1,6 @@
 import { Router } from "express";
 import controller from "../staffAttendance/staffAttendance.controller.js";
-import { verifyToken } from "../../middlewares/auth.js";
+// import { verifyToken } from "../../middlewares/auth.js";
 
 const router = Router();
 
@@ -19,28 +19,28 @@ router.post(
 // ➤ List attendance (Superadmin + Admin + Staff)
 router.get(
   "/",
-  verifyToken(["Superadmin", "Admin", "Staff"]),
+//   verifyToken(["Superadmin", "Admin", "Staff"]),
   controller.list
 );
 
 // ➤ Get attendance by ID (Superadmin + Admin + Staff)
 router.get(
   "/:id",
-  verifyToken(["Superadmin", "Admin", "Staff"]),
+//   verifyToken(["Superadmin", "Admin", "Staff"]),
   controller.get
 );
 
 // ➤ Update attendance (Only Superadmin + Admin)
 router.put(
   "/update/:id",
-  verifyToken(["Superadmin", "Admin"]),
+//   verifyToken(["Superadmin", "Admin"]),
   controller.update
 );
 
 // ➤ Delete attendance (Only Superadmin)
 router.delete(
   "/delete/:id",
-  verifyToken(["Superadmin", "Admin"]),
+//   verifyToken(["Superadmin", "Admin"]),
   controller.delete
 );
 

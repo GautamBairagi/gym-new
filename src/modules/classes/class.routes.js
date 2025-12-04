@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyToken } from "../../middlewares/auth.js";
+// import { verifyToken } from "../../middlewares/auth.js";
 
 import {
   createClassType,
@@ -17,54 +17,54 @@ import {
 
 const router = Router();
 
-router.put("/scheduled/update/:id", verifyToken(["Admin", "Superadmin", "Staff"]), updateSchedule);
-router.delete("/scheduled/delete/:id", verifyToken(["Admin", "Superadmin", "Staff"]), deleteSchedule);
+router.put("/scheduled/update/:id", updateSchedule);
+router.delete("/scheduled/delete/:id", deleteSchedule);
 
-router.get("/scheduled/all", verifyToken(["Admin", "Superadmin", "Staff"]), getAllScheduledClasses);
-router.get("/scheduled/scheduledById/:id", verifyToken(["Admin", "Superadmin", "Staff"]), getScheduleById);
+router.get("/scheduled/all", getAllScheduledClasses);
+router.get("/scheduled/scheduledById/:id", getScheduleById);
 
 // CLASS TYPES
 router.post(
   "/classtype/create",
-  verifyToken(["Admin", "Superadmin"]),
+ 
   createClassType
 );
 
 router.get(
   "/classtype",
-  verifyToken(["Admin", "Superadmin", "Staff"]),
+ 
   listClassTypes
 );
 
 // CLASS SCHEDULE
 router.post(
   "/schedule/create",
-  verifyToken(["Admin", "Superadmin"]),
+
   createSchedule
 );
 
 router.get(
   "/schedule/branch/:branchId",
-  verifyToken(["Admin", "Superadmin", "Staff"]),
+ 
   listSchedules
 );
 
 // BOOKING
 router.post(
   "/book",
-  verifyToken(["Admin", "Superadmin", "Staff"]),
+
   bookClass
 );
 
 router.post(
   "/cancel",
-  verifyToken(["Admin", "Superadmin", "Staff"]),
+
   cancelBooking
 );
 
 router.get(
   "/member/:memberId",
-  verifyToken(["Admin", "Superadmin", "Staff"]),
+  
   memberBookings
 );
 
