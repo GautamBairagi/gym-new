@@ -107,17 +107,21 @@ export const staffDetail = async (req, res, next) => {
 
 export const updateStaff = async (req, res, next) => {
   try {
-    const id = parseInt(req.params.id);
+    const staffId = parseInt(req.params.id);   // Only ID needed from params
     const data = req.body;
 
+    // Hash password if provided in body
     if (data.password) {
       data.password = await bcrypt.hash(data.password, 10);
     }
 
-    // logged admin updating → update adminId also (optional)
-    data.adminId = req.user.id;
+    // Auto set adminId (safe)
+    if (req.user && req.user.id) {
+  data.adminId = req.user.id;
+}
 
-    const staff = await updateStaffService(id, data);
+
+    const staff = await updateStaffService(staffId, data);
 
     res.json({
       success: true,
@@ -128,6 +132,8 @@ export const updateStaff = async (req, res, next) => {
     next(err);
   }
 };
+
+
 
 export const deleteStaff = async (req, res, next) => {
   try {

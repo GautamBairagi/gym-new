@@ -58,7 +58,7 @@ router.get(
  */
 router.put(
   "/update/:id",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   updateStaff
 );
 

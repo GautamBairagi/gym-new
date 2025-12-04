@@ -62,29 +62,31 @@ export const getAllSalariesService = async () => {
       st.gender,
       st.joinDate
     FROM salary s
-    LEFT JOIN staff st ON s.staffId = st.id
-    LEFT JOIN user u ON st.userId = u.id
+    LEFT JOIN user u ON s.staffId = u.id
+    LEFT JOIN staff st ON st.userId = u.id
     ORDER BY s.id DESC
   `;
 
   const [rows] = await pool.query(sql);
-  return rows;
+  return rows;
 };
+
+
 
 
 // ===== GET BY ID =====
 export const getSalaryByIdService = async (id) => {
   const sql = `
     SELECT 
-      s.*,
+      s.*, 
       u.fullName AS staffName,
       u.email AS staffEmail,
       u.phone AS staffPhone,
       st.gender,
       st.joinDate
     FROM salary s
-    LEFT JOIN staff st ON s.staffId = st.id
-    LEFT JOIN user u ON st.userId = u.id
+    LEFT JOIN user u ON s.staffId = u.id     -- FIX
+    LEFT JOIN staff st ON st.userId = u.id   -- FIX
     WHERE s.id = ?
   `;
 
@@ -94,6 +96,7 @@ export const getSalaryByIdService = async (id) => {
 
   return rows[0];
 };
+
 
 
 // ===== DELETE =====
@@ -122,24 +125,54 @@ export const updateSalaryService = async (id, data) => {
   const hourlyTotal = (hoursWorked || 0) * (hourlyRate || 0);
   const bonusTotal = bonuses?.reduce((a, b) => a + Number(b.amount), 0) || 0;
   const deductionTotal = deductions?.reduce((a, b) => a + Number(b.amount), 0) || 0;
-  const netPay = hourlyTotal + (fixedSalary || 0) + (commissionTotal || 0) + bonusTotal - deductionTotal;
 
-  await pool.query(
-    `UPDATE Salary SET
-      salaryId = ?, staffId = ?, role = ?, periodStart = ?, periodEnd = ?, hoursWorked = ?, hourlyRate = ?,
-      hourlyTotal = ?, fixedSalary = ?, commissionTotal = ?, bonuses = ?, deductions = ?, netPay = ?, status = ?
-     WHERE id = ?`,
-    [
-      salaryId, staffId, role, periodStart, periodEnd, hoursWorked, hourlyRate,
-      hourlyTotal, fixedSalary, commissionTotal,
-      JSON.stringify(bonuses || []),
-      JSON.stringify(deductions || []),
-      netPay, status, id
-    ]
-  );
+  const netPay =
+    hourlyTotal +
+    (fixedSalary || 0) +
+    (commissionTotal || 0) +
+    bonusTotal -
+    deductionTotal;
+
+  const sql = `
+    UPDATE Salary SET
+      salaryId = ?,
+      staffId = ?,          -- USER ID
+      role = ?,
+      periodStart = ?,
+      periodEnd = ?,
+      hoursWorked = ?,
+      hourlyRate = ?,
+      hourlyTotal = ?,
+      fixedSalary = ?,
+      commissionTotal = ?,
+      bonuses = ?,
+      deductions = ?,
+      netPay = ?,
+      status = ?
+    WHERE id = ?
+  `;
+
+  await pool.query(sql, [
+    salaryId,
+    staffId,
+    role,
+    new Date(periodStart),
+    new Date(periodEnd),
+    hoursWorked,
+    hourlyRate,
+    hourlyTotal,
+    fixedSalary,
+    commissionTotal,
+    JSON.stringify(bonuses || []),
+    JSON.stringify(deductions || []),
+    netPay,
+    status,
+    id
+  ]);
 
   return { id, ...data, netPay };
 };
+
 
 // ===== GET BY STAFF ID =====
 export const getSalaryByStaffIdService = async (staffId) => {
@@ -152,8 +185,8 @@ export const getSalaryByStaffIdService = async (staffId) => {
       st.gender,
       st.joinDate
     FROM salary s
-    LEFT JOIN staff st ON s.staffId = st.id
-    LEFT JOIN user u ON st.userId = u.id
+    LEFT JOIN user u ON s.staffId = u.id      -- FIX
+    LEFT JOIN staff st ON st.userId = u.id    -- FIX
     WHERE s.staffId = ?
     ORDER BY s.id DESC
   `;
@@ -164,4 +197,5 @@ export const getSalaryByStaffIdService = async (staffId) => {
 
   return rows;
 };
+
 
