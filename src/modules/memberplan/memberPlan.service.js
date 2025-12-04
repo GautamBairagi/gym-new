@@ -1,10 +1,20 @@
+// src/modules/memberplan/memberPlan.service.js
 import { pool } from "../../config/db.js";
 
-// CREATE
+/**************************************
+ * CREATE MEMBER PLAN
+ **************************************/
 export const saveMemberPlan = async (payload) => {
-  const { name, sessions, validityDays, price, type, adminId } = payload;
+  // allow both: name OR planName, validityDays OR validity
+  const name = payload.name || payload.planName;
+  const sessions = Number(payload.sessions ?? 0);
+  const validityDays = Number(payload.validityDays ?? payload.validity ?? 0);
+  const price = Number(payload.price ?? 0);
+  const type = payload.type || null;
+  const adminId = payload.adminId;
 
   if (!adminId) throw { status: 400, message: "adminId is required" };
+  if (!name) throw { status: 400, message: "Plan name is required" };
 
   const [result] = await pool.query(
     `INSERT INTO memberplan 
@@ -13,16 +23,17 @@ export const saveMemberPlan = async (payload) => {
     [name, sessions, validityDays, price, type, adminId]
   );
 
-  const [plan] = await pool.query(
+  const [rows] = await pool.query(
     `SELECT * FROM memberplan WHERE id = ?`,
     [result.insertId]
   );
 
-  return plan[0];
+  return rows[0];
 };
 
-
-// GET ALL – for a particular admin
+/**************************************
+ * GET ALL – for a particular admin (simple)
+ **************************************/
 export const getAllMemberPlans = async (adminId) => {
   const [plans] = await pool.query(
     `SELECT * FROM memberplan WHERE adminId = ? ORDER BY id DESC`,
@@ -31,9 +42,11 @@ export const getAllMemberPlans = async (adminId) => {
   return plans;
 };
 
-// GET ALL via request handler
+/**************************************
+ * GET ALL – detailed list by adminId (used in controller)
+ **************************************/
 export const getMemberPlansByAdminIdService = async (adminId) => {
-  const [rows] = await pool.promise().query(
+  const [rows] = await pool.query(
     `SELECT 
         id,
         name,
@@ -47,16 +60,20 @@ export const getMemberPlansByAdminIdService = async (adminId) => {
      FROM memberplan
      WHERE adminId = ?
      ORDER BY id DESC`,
-    [adminId]
+    [Number(adminId)]
   );
 
   return rows;
 };
 
-
-// GET BY ID
+/**************************************
+ * GET BY ID
+ **************************************/
 export const getMemberPlanById = async (id) => {
-  const [plans] = await pool.query(`SELECT * FROM memberplan WHERE id = ?`, [id]);
+  const [plans] = await pool.query(
+    `SELECT * FROM memberplan WHERE id = ?`,
+    [Number(id)]
+  );
   if (!plans[0]) throw { status: 404, message: "Member plan not found" };
   return plans[0];
 };
@@ -76,7 +93,10 @@ export const getMemberPlanById = async (id) => {
 
 // // DELETE
 export const deleteMemberPlan = async (id) => {
-  await pool.query(`DELETE FROM memberplan WHERE id = ?`, [id]);
+  await pool.query(
+    `DELETE FROM memberplan WHERE id = ?`,
+    [Number(id)]
+  );
   return true;
 };
 

@@ -28,9 +28,9 @@ import inventoryRoutes from "../modules/inventory/inventory.routes.js";
 import purchaseRoutes from "../modules/purchase/purchase.routes.js";
 import sessionRoutes from "../modules/session/session.routes.js";
 import  MemberPlan  from "../modules/memberplan/memberPlan.routes.js";
-import salaryRoutes from "../modules/salary/salary.routes.js";
-
 import  SalaryRoutes from "../modules/salary/salary.routes.js";
+import houseKeepingRoutes from "../modules/houseKeppingtask/housekeeping.routes.js";
+import staffAttendanceRoutes from "../modules/staffAttendance/staffAttendance.routes.js";
 
 
 
@@ -65,7 +65,10 @@ router.use("/inventory", inventoryRoutes);
 router.use("/purchases", purchaseRoutes); 
 router.use("/MemberPlan", MemberPlan); 
 router.use("/sessions", sessionRoutes);
-router.use("/salaries", salaryRoutes);
+router.use("/salaries", SalaryRoutes);
+router.use("/housekeeping", houseKeepingRoutes);
+router.use("/staff-attendance", staffAttendanceRoutes);
+
 
 
 

@@ -7,7 +7,7 @@ import {
   deletePlan,
   getMemberPlansnewss
 } from "../memberplan/memberPlan.controller.js";
-import { verifyToken } from "../../middlewares/auth.js";
+// import { verifyToken } from "../../middlewares/auth.js";
 
 const router = Router();
 

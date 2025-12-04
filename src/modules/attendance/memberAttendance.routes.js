@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyToken } from "../../middlewares/auth.js";
+// import { verifyToken } from "../../middlewares/auth.js";
 
 import {
   memberCheckIn,
@@ -34,38 +34,38 @@ const router = Router();
 // MEMBER ATTENDANCE
 router.post(
   "/member/checkin",
-  verifyToken(["Admin", "Staff", "Member"]),
+  // verifyToken(["Admin", "Staff", "Member"]),
   memberCheckIn
 );
 
 router.post(
   "/member/checkout",
-  verifyToken(["Admin", "Staff", "Member"]),
+  // verifyToken(["Admin", "Staff", "Member"]),
   memberCheckOut
 );
 
 router.get(
   "/member/history/:memberId",
-  verifyToken(["Admin", "Staff", "Member"]),
+  // verifyToken(["Admin", "Staff", "Member"]),
   memberAttendanceList
 );
 
 // STAFF ATTENDANCE
 router.post(
   "/staff/checkin",
-  verifyToken(["Admin", "Staff", "Superadmin"]),
+  // verifyToken(["Admin", "Staff", "Superadmin"]),
   staffCheckIn
 );
 
 router.post(
   "/staff/checkout",
-  verifyToken(["Admin", "Staff", "Superadmin"]),
+  // verifyToken(["Admin", "Staff", "Superadmin"]),
   staffCheckOut
 );
 
 router.get(
   "/staff/history/:staffId",
-  verifyToken(["Admin", "Staff", "Superadmin"]),
+  // verifyToken(["Admin", "Staff", "Superadmin"]),
   staffAttendanceList
 );
 

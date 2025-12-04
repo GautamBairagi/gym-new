@@ -8,8 +8,9 @@ import {
   staffDetail,
   updateStaff,
   deleteStaff,
+  getAllStaff
 } from "./staff.controller.js";
-import { verifyToken } from "../../middlewares/auth.js";
+// import { verifyToken } from "../../middlewares/auth.js";
 
 const router = Router();
 
@@ -18,17 +19,19 @@ const router = Router();
  */
 router.post(
   "/create",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   createStaff
 );
 
+
+router.get("/all",getAllStaff);
 /**
  * 👉 List Staff by Branch
  * 🛑 Prevent Admin accessing other branches
  */
 router.get(
   "/branch/:branchId",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   (req, res, next) => {
     if (req.user.role === "Admin") {
       // Force admin to their own branch
@@ -45,7 +48,7 @@ router.get(
  */
 router.get(
   "/detail/:id",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   (req, res, next) => {
     req.checkBranch = true; // custom flag for controller -> optional use
     next();
@@ -58,7 +61,7 @@ router.get(
  */
 router.put(
   "/update/:id",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   updateStaff
 );
 
@@ -67,7 +70,7 @@ router.put(
  */
 router.delete(
   "/delete/:id",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   deleteStaff
 );
 
