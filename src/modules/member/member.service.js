@@ -165,18 +165,33 @@ export const memberDetailService = async (id) => {
   );
 
   if (rows.length === 0) throw { status: 404, message: "Member not found" };
-  return rows[0];
+
+  const member = rows[0];
+  delete member.password;   // 👈 Remove password from response
+
+  return member;
 };
+
 
 /**************************************
  * UPDATE MEMBER
  **************************************/
 export const updateMemberService = async (id, data) => {
+  // 1️⃣ Fetch existing member
+  const [[existing]] = await pool.query(
+    "SELECT * FROM member WHERE id = ?",
+    [id]
+  );
+
+  if (!existing) throw { status: 404, message: "Member not found" };
+
+  // 2️⃣ Extract fields
   const {
-    fullName,
-    email,
+    fullName = existing.fullName,
+    email = existing.email,
+    phone = existing.phone,
     password,
-    phone,
+    
     planId,
     membershipFrom,
     dateOfBirth,
@@ -190,51 +205,85 @@ export const updateMemberService = async (id, data) => {
     status  // <-- NEW
   } = data;
 
-  // Duplicate check
-  if (email || phone) {
-    const [exists] = await pool.query(
-      "SELECT id FROM member WHERE (email = ? OR phone = ?) AND id != ?",
-      [email || "", phone || "", id]
-    );
-    if (exists.length > 0) throw { status: 400, message: "Email or phone already exists" };
+  // 3️⃣ Hash password only if updating
+  let hashedPassword = existing.password;
+  if (password) {
+    hashedPassword = await bcrypt.hash(password, 10);
   }
 
   let startDate = membershipFrom ? new Date(membershipFrom) : undefined;
   let endDate = undefined;
 
-  if (planId && startDate) {
+  // 5️⃣ Recalculate membershipTo if plan changed
+  // let startDate = new Date(membershipFrom);
+  // let endDate = existing.membershipTo;
+
+  if (planId) {
     const [planRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [planId]);
+    if (!planRows.length) throw { status: 404, message: "Invalid plan selected" };
+
     const plan = planRows[0];
-    if (!plan) throw { status: 404, message: "Invalid plan selected" };
     endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + Number(plan.duration || 0));
   }
 
+  // 6️⃣ Update member table
   await pool.query(
     `UPDATE member SET
-      fullName = ?, email = ?, password = ?, phone = ?, planId = ?, 
-      membershipFrom = ?, membershipTo = ?, dateOfBirth = ?, paymentMode = ?, 
-      amountPaid = ?, branchId = ?, gender = ?, interestedIn = ?, address = ?, 
-      adminId = ?, status = ?   -- <-- NEW FIELD
-    WHERE id = ?`,
+      fullName = ?,
+      email = ?,
+      password = ?,
+      phone = ?,
+      planId = ?,
+      membershipFrom = ?,
+      membershipTo = ?,
+      dateOfBirth = ?,
+      paymentMode = ?,
+      amountPaid = ?,
+      branchId = ?,
+      gender = ?,
+      interestedIn = ?,
+      address = ?,
+      adminId = ?
+     WHERE id = ?`,
     [
       fullName,
       email,
-      password || null,
-      phone || null,
-      planId || null,
-      startDate || null,
-      endDate || null,
+      hashedPassword,
+      phone,
+      planId,
+      startDate,
+      endDate,
       dateOfBirth ? new Date(dateOfBirth) : null,
-      paymentMode || null,
-      amountPaid ? Number(amountPaid) : null,
-      branchId || null,
-      gender || null,
-      interestedIn || null,
-      address || null,
-      adminId || null,
-      status || "Active",        // <-- DEFAULT
+      paymentMode,
+      amountPaid,
+      branchId,
+      gender,
+      interestedIn,
+      address,
+      adminId,
       id
+    ]
+  );
+
+  // 7️⃣ Update user table also (important)
+  await pool.query(
+    `UPDATE user SET 
+      fullName = ?, 
+      email = ?, 
+      phone = ?, 
+      password = ?, 
+      branchId = ?, 
+      address = ?
+     WHERE id = ?`,
+    [
+      fullName,
+      email,
+      phone,
+      hashedPassword,
+      branchId,
+      address,
+      existing.userId
     ]
   );
 
@@ -251,6 +300,10 @@ export const deleteMemberService = async (id) => {
     "SELECT userId FROM member WHERE id = ?",
     [id]
   );
+  if (!member) throw { status: 404, message: "Member not found" };
+
+  await pool.query(`UPDATE member SET status='Inactive' WHERE id=?`, [id]);
+  await pool.query(`UPDATE user SET status='Inactive' WHERE id=?`, [member.userId]);
 
   if (rows.length === 0) {
     throw { status: 404, message: "Member not found" };
