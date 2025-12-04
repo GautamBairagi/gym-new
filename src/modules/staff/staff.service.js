@@ -32,7 +32,7 @@ export const createStaffService = async (data) => {
     `INSERT INTO user 
       (fullName, email, phone, password, roleId, branchId) 
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [fullName, email, password, phone || null, roleId, branchId || null]
+    [fullName, email, phone || null,password,  roleId, branchId || null]
   );
 
   const userId = result.insertId;
@@ -62,35 +62,41 @@ export const createStaffService = async (data) => {
  **************************************/
 export const listStaffService = async (branchId) => {
   const sql = `
-    SELECT u.*, s.adminId, s.gender, s.dateOfBirth, s.joinDate, s.exitDate, s.profilePhoto
+    SELECT 
+      u.id, u.fullName, u.email, u.phone, u.roleId, u.branchId,
+      s.adminId, s.gender, s.dateOfBirth, s.joinDate, s.exitDate, s.profilePhoto
     FROM user u
     LEFT JOIN staff s ON u.id = s.userId
-    WHERE u.branchId = ?
+    WHERE u.roleId = 4 AND u.branchId = ?
     ORDER BY u.id DESC
   `;
   const [rows] = await pool.query(sql, [branchId]);
   return rows;
 };
 
+
 /**************************************
  * STAFF DETAIL
  **************************************/
 export const staffDetailService = async (id) => {
   const sql = `
-    SELECT u.*, s.adminId, s.gender, s.dateOfBirth, s.joinDate, s.exitDate, s.profilePhoto
+    SELECT 
+      u.id, u.fullName, u.email, u.phone, u.roleId, u.branchId,
+      s.adminId, s.gender, s.dateOfBirth, s.joinDate, s.exitDate, s.profilePhoto
     FROM user u
     LEFT JOIN staff s ON u.id = s.userId
-    WHERE u.id = ?
+    WHERE s.id = ?
   `;
   const [rows] = await pool.query(sql, [id]);
   if (rows.length === 0) throw { status: 404, message: "Staff not found" };
   return rows[0];
 };
 
+
 /**************************************
  * UPDATE STAFF
  **************************************/
-export const updateStaffService = async (id, data) => {
+export const updateStaffService = async (staffId, data) => {
   const {
     fullName,
     email,
@@ -106,20 +112,39 @@ export const updateStaffService = async (id, data) => {
     profilePhoto,
   } = data;
 
-  // check duplicate email
+  // 1️⃣ Fetch userId from staff table using staffId
+  const [staffRows] = await pool.query(
+    "SELECT userId FROM staff WHERE id = ?",
+    [staffId]
+  );
+
+  if (staffRows.length === 0) {
+    throw { status: 404, message: "Staff not found" };
+  }
+
+  const userId = staffRows[0].userId;
+
+  // 2️⃣ Check duplicate email (if any)
   if (email) {
     const [exists] = await pool.query(
       "SELECT id FROM user WHERE email = ? AND id != ?",
-      [email, id]
+      [email, userId]
     );
-    if (exists.length > 0) throw { status: 400, message: "Email already exists" };
+    if (exists.length > 0) {
+      throw { status: 400, message: "Email already exists" };
+    }
   }
 
-  // update user table
+  // 3️⃣ Update USER table
   await pool.query(
-    `UPDATE user SET 
-      fullName=?, email=?, phone=?, password=IFNULL(?, password), roleId=?, branchId=? 
-     WHERE id=?`,
+    `UPDATE user SET
+      fullName = ?,
+      email = ?,
+      phone = ?,
+      password = IFNULL(?, password),
+      roleId = ?,
+      branchId = ?
+     WHERE id = ?`,
     [
       fullName,
       email,
@@ -127,15 +152,20 @@ export const updateStaffService = async (id, data) => {
       password || null,
       roleId,
       branchId || null,
-      id,
+      userId,
     ]
   );
 
-  // update staff table
+  // 4️⃣ Update STAFF table
   await pool.query(
-    `UPDATE staff SET 
-      adminId=?, gender=?, dateOfBirth=?, joinDate=?, exitDate=?, profilePhoto=? 
-     WHERE userId=?`,
+    `UPDATE staff SET
+      adminId = ?,
+      gender = ?,
+      dateOfBirth = ?,
+      joinDate = ?,
+      exitDate = ?,
+      profilePhoto = ?
+     WHERE id = ?`,
     [
       adminId || null,
       gender || null,
@@ -143,12 +173,15 @@ export const updateStaffService = async (id, data) => {
       joinDate ? new Date(joinDate) : null,
       exitDate ? new Date(exitDate) : null,
       profilePhoto || null,
-      id,
+      staffId     // <-- Correct value
     ]
   );
 
-  return staffDetailService(id);
+  // 5️⃣ Return updated staff detail
+  return staffDetailService(staffId);
 };
+
+
 
 /**************************************
  * DELETE STAFF
