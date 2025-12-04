@@ -62,20 +62,43 @@ export const getMemberPlanById = async (id) => {
 };
 
 // UPDATE
-export const updateMemberPlan = async (id, payload) => {
-  await pool.query(
-    `UPDATE memberplan 
-     SET name = ?, sessions = ?, validityDays = ?, price = ?
-     WHERE id = ?`,
-    [payload.planName, Number(payload.sessions), Number(payload.validity), Number(payload.price), id]
-  );
+// export const updateMemberPlan = async (id, payload) => {
+//   await pool.query(
+//     `UPDATE memberplan 
+//      SET name = ?, sessions = ?, validityDays = ?, price = ?
+//      WHERE id = ?`,
+//     [payload.planName, Number(payload.sessions), Number(payload.validity), Number(payload.price), id]
+//   );
 
-  const [updated] = await pool.query(`SELECT * FROM memberplan WHERE id = ?`, [id]);
-  return updated[0];
-};
+//   const [updated] = await pool.query(`SELECT * FROM memberplan WHERE id = ?`, [id]);
+//   return updated[0];
+// };
 
-// DELETE
+// // DELETE
 export const deleteMemberPlan = async (id) => {
   await pool.query(`DELETE FROM memberplan WHERE id = ?`, [id]);
   return true;
 };
+
+
+export const updateMemberPlan = async (planId, payload, adminId) => {
+  const { planName, sessions, validity, price } = payload;
+
+  const [result] = await pool.query(
+    `UPDATE memberplan 
+     SET name = ?, sessions = ?, validityDays = ?, price = ?
+     WHERE id = ? AND adminId = ?`,
+    [planName, sessions, validity, price, planId, adminId]
+  );
+
+  if (result.affectedRows === 0) return null;
+
+  const [rows] = await pool.query(
+    `SELECT * FROM memberplan WHERE id = ? AND adminId = ?`,
+    [planId, adminId]
+  );
+
+  return rows[0];
+};
+
+

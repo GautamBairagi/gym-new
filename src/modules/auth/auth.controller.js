@@ -127,3 +127,23 @@ export const loginMember = async (req, res, next) => {
     next(err);
   }
 };
+
+
+export const changePasswordController = async (req, res, next) => {
+  try {
+    const id = req.user.id; // from JWT middleware
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: "Old & new password required" });
+    }
+
+    const result = await changeUserPassword(id, oldPassword, newPassword);
+
+    res.json({ success: true, ...result });
+
+  } catch (err) {
+    next(err);
+  }
+};
+

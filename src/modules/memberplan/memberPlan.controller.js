@@ -61,20 +61,47 @@ export const getMemberPlan = async (req, res, next) => {
   }
 };
 
+// export const updatePlan = async (req, res, next) => {
+//   try {
+//     const adminId = req.user.id;
+//     const data = await updateMemberPlan(Number(req.params.id), req.body, adminId);
+
+//     res.json({
+//       success: true,
+//       message: "Plan updated successfully",
+//       plan: data
+//     });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
+
 export const updatePlan = async (req, res, next) => {
   try {
-    const adminId = req.user.id;
-    const data = await updateMemberPlan(Number(req.params.id), req.body, adminId);
+    const adminId = Number(req.params.adminId);
+    const planId = Number(req.params.planId);
+
+    const updated = await updateMemberPlan(planId, req.body, adminId);
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: "Plan not found OR adminId does not match"
+      });
+    }
 
     res.json({
       success: true,
       message: "Plan updated successfully",
-      plan: data
+      plan: updated
     });
+
   } catch (err) {
     next(err);
   }
 };
+
 
 export const deletePlan = async (req, res, next) => {
   try {
