@@ -97,22 +97,7 @@ export const staffDetailService = async (id) => {
  * UPDATE STAFF
  **************************************/
 export const updateStaffService = async (staffId, data) => {
-  const {
-    fullName,
-    email,
-    phone,
-    password,
-    roleId,
-    branchId,
-    adminId,
-    gender,
-    dateOfBirth,
-    joinDate,
-    exitDate,
-    profilePhoto,
-  } = data;
-
-  // 1️⃣ Fetch userId from staff table using staffId
+  // 1️⃣ Fetch userId from staff table
   const [staffRows] = await pool.query(
     "SELECT userId FROM staff WHERE id = ?",
     [staffId]
@@ -124,62 +109,59 @@ export const updateStaffService = async (staffId, data) => {
 
   const userId = staffRows[0].userId;
 
-  // 2️⃣ Check duplicate email (if any)
-  if (email) {
-    const [exists] = await pool.query(
-      "SELECT id FROM user WHERE email = ? AND id != ?",
-      [email, userId]
-    );
-    if (exists.length > 0) {
-      throw { status: 400, message: "Email already exists" };
+  // 2️⃣ Update USER table dynamically
+  const userFields = [];
+  const userValues = [];
+
+  const userColumns = ["fullName", "email", "phone", "password", "roleId", "branchId"];
+
+  for (const col of userColumns) {
+    if (data[col] !== undefined) {
+      if (col === "password") {
+        userFields.push(`password = ?`);
+        userValues.push(data[col]);
+      } else {
+        userFields.push(`${col} = ?`);
+        userValues.push(data[col]);
+      }
     }
   }
 
-  // 3️⃣ Update USER table
-  await pool.query(
-    `UPDATE user SET
-      fullName = ?,
-      email = ?,
-      phone = ?,
-      password = IFNULL(?, password),
-      roleId = ?,
-      branchId = ?
-     WHERE id = ?`,
-    [
-      fullName,
-      email,
-      phone || null,
-      password || null,
-      roleId,
-      branchId || null,
-      userId,
-    ]
-  );
+  if (userFields.length > 0) {
+    userValues.push(userId);
+    await pool.query(
+      `UPDATE user SET ${userFields.join(", ")} WHERE id = ?`,
+      userValues
+    );
+  }
 
-  // 4️⃣ Update STAFF table
-  await pool.query(
-    `UPDATE staff SET
-      adminId = ?,
-      gender = ?,
-      dateOfBirth = ?,
-      joinDate = ?,
-      exitDate = ?,
-      profilePhoto = ?
-     WHERE id = ?`,
-    [
-      adminId || null,
-      gender || null,
-      dateOfBirth ? new Date(dateOfBirth) : null,
-      joinDate ? new Date(joinDate) : null,
-      exitDate ? new Date(exitDate) : null,
-      profilePhoto || null,
-      staffId     // <-- Correct value
-    ]
-  );
+  // 3️⃣ Update STAFF table dynamically
+  const staffFields = [];
+  const staffValues = [];
 
-  // 5️⃣ Return updated staff detail
+  const staffColumns = ["adminId", "gender", "dateOfBirth", "joinDate", "exitDate", "profilePhoto"];
+
+  for (const col of staffColumns) {
+    if (data[col] !== undefined) {
+      staffFields.push(`${col} = ?`);
+      staffValues.push(data[col]);
+    }
+  }
+
+  if (staffFields.length > 0) {
+    staffValues.push(staffId);
+    await pool.query(
+      `UPDATE staff SET ${staffFields.join(", ")} WHERE id = ?`,
+      staffValues
+    );
+  }
+
+  // 4️⃣ Return updated row
   return staffDetailService(staffId);
 };
+
+
+
 
 
 
