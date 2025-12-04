@@ -7,6 +7,7 @@ import {
   staffDetailService,
   updateStaffService,
   deleteStaffService,
+  getAllStaffService
 } from "./staff.service.js";
 import bcrypt from "bcryptjs";
 
@@ -147,6 +148,18 @@ export const updateStaff = async (req, res, next) => {
   }
 };
 
+export const getAllStaff = async (req, res, next) => {
+  try {
+    const staff = await getAllStaffService();
+
+    res.json({
+      success: true,
+      staff,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 
 export const deleteStaff = async (req, res, next) => {
@@ -157,6 +170,21 @@ export const deleteStaff = async (req, res, next) => {
     res.json({
       success: true,
       message: "Staff deactivated successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAdminStaff = async (req, res, next) => {
+  try {
+    const adminId = req.user.id;  // Logged admin ka ID
+
+    const staff = await getAdminStaffService(adminId);
+
+    res.json({
+      success: true,
+      staff,
     });
   } catch (err) {
     next(err);

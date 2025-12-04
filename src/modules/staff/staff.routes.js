@@ -8,6 +8,7 @@ import {
   staffDetail,
   updateStaff,
   deleteStaff,
+  getAllStaff
 } from "./staff.controller.js";
 import { verifyToken } from "../../middlewares/auth.js";
 
@@ -22,6 +23,8 @@ router.post(
   createStaff
 );
 
+
+router.get("/all",getAllStaff);
 /**
  * 👉 List Staff by Branch
  * 🛑 Prevent Admin accessing other branches

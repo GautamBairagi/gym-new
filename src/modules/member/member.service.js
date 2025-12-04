@@ -3,6 +3,8 @@ import { pool } from "../../config/db.js";
 /**************************************
  * CREATE MEMBER
  **************************************/
+import bcrypt from "bcryptjs";
+
 export const createMemberService = async (data) => {
   const {
     fullName,
@@ -24,6 +26,9 @@ export const createMemberService = async (data) => {
   if (!fullName || !email || !password) {
     throw { status: 400, message: "fullName, email, and password are required" };
   }
+
+  // 1️⃣ HASH THE PASSWORD (ONLY CHANGE YOU WANTED)
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   // Check duplicates (email / phone)
   const [exists] = await pool.query(
@@ -51,30 +56,38 @@ export const createMemberService = async (data) => {
 
   // Insert member
   const [result] = await pool.query(
-  `INSERT INTO member
-    (fullName, email, password, phone, planId, membershipFrom, membershipTo, dateOfBirth, paymentMode, amountPaid, branchId, gender, interestedIn, address, adminId, status)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`,
-  [
-    fullName,
-    email,
-    password, // plaintext or hash depending on requirement
-    phone || null,
-    planId || null,
-    startDate,
-    endDate,
-    dateOfBirth ? new Date(dateOfBirth) : null,
-    paymentMode || null,
-    amountPaid ? Number(amountPaid) : 0,
-    branchId || null,
-    gender || null,
-    interestedIn || null,
-    address || null,  // <-- comma here
-    adminId || null   // <-- last item
-  ]
-);
+    `INSERT INTO member
+      (fullName, email, password, phone, planId, membershipFrom, membershipTo, dateOfBirth, paymentMode, amountPaid, branchId, gender, interestedIn, address, adminId, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`,
+    [
+      fullName,
+      email,
+      hashedPassword,      // 👈 HERE: store hashed password
+      phone || null,
+      planId || null,
+      startDate,
+      endDate,
+      dateOfBirth ? new Date(dateOfBirth) : null,
+      paymentMode || null,
+      amountPaid ? Number(amountPaid) : 0,
+      branchId || null,
+      gender || null,
+      interestedIn || null,
+      address || null,
+      adminId || null
+    ]
+  );
 
-  return { id: result.insertId, ...data, membershipFrom: startDate, membershipTo: endDate, status: "Active" };
+  return {
+    id: result.insertId,
+    ...data,
+    password: undefined,   // password ko response me mat bhejna
+    membershipFrom: startDate,
+    membershipTo: endDate,
+    status: "Active"
+  };
 };
+
 
 /**************************************
  * LIST MEMBERS
