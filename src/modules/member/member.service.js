@@ -186,7 +186,8 @@ export const updateMemberService = async (id, data) => {
     gender,
     interestedIn,
     address,
-    adminId
+    adminId,
+    status  // <-- NEW
   } = data;
 
   // Duplicate check
@@ -198,7 +199,6 @@ export const updateMemberService = async (id, data) => {
     if (exists.length > 0) throw { status: 400, message: "Email or phone already exists" };
   }
 
-  // Calculate membershipTo if plan or start date changes
   let startDate = membershipFrom ? new Date(membershipFrom) : undefined;
   let endDate = undefined;
 
@@ -206,64 +206,67 @@ export const updateMemberService = async (id, data) => {
     const [planRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [planId]);
     const plan = planRows[0];
     if (!plan) throw { status: 404, message: "Invalid plan selected" };
-    const durationDays = Number(plan.duration) || 0;
     endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + durationDays);
+    endDate.setDate(endDate.getDate() + Number(plan.duration || 0));
   }
 
-  // Update member
   await pool.query(
-  `UPDATE member SET
-    fullName = ?,
-    email = ?,
-    password = ?,
-    phone = ?,
-    planId = ?,
-    membershipFrom = ?,
-    membershipTo = ?,
-    dateOfBirth = ?,
-    paymentMode = ?,
-    amountPaid = ?,
-    branchId = ?,
-    gender = ?,
-    interestedIn = ?,
-    address = ?,
-    adminId = ?
-  WHERE id = ?`,
-  [
-    fullName,
-    email,
-    password || null,
-    phone || null,
-    planId || null,
-    startDate || null,
-    endDate || null,
-    dateOfBirth ? new Date(dateOfBirth) : null,
-    paymentMode || null,
-    amountPaid ? Number(amountPaid) : null,
-    branchId || null,
-    gender || null,
-    interestedIn || null,
-    address || null,  // <-- comma here
-    adminId || null,  // <-- comma here
-    id
-  ]
-);
+    `UPDATE member SET
+      fullName = ?, email = ?, password = ?, phone = ?, planId = ?, 
+      membershipFrom = ?, membershipTo = ?, dateOfBirth = ?, paymentMode = ?, 
+      amountPaid = ?, branchId = ?, gender = ?, interestedIn = ?, address = ?, 
+      adminId = ?, status = ?   -- <-- NEW FIELD
+    WHERE id = ?`,
+    [
+      fullName,
+      email,
+      password || null,
+      phone || null,
+      planId || null,
+      startDate || null,
+      endDate || null,
+      dateOfBirth ? new Date(dateOfBirth) : null,
+      paymentMode || null,
+      amountPaid ? Number(amountPaid) : null,
+      branchId || null,
+      gender || null,
+      interestedIn || null,
+      address || null,
+      adminId || null,
+      status || "Active",        // <-- DEFAULT
+      id
+    ]
+  );
 
   return memberDetailService(id);
 };
+
 
 /**************************************
  * DELETE (SOFT DELETE)
  **************************************/
 export const deleteMemberService = async (id) => {
-  await pool.query(
-    "UPDATE member SET status = 'Inactive' WHERE id = ?",
+  // Get userId from member table
+  const [rows] = await pool.query(
+    "SELECT userId FROM member WHERE id = ?",
     [id]
   );
 
-  return { message: "Member deactivated successfully" };
+  if (rows.length === 0) {
+    throw { status: 404, message: "Member not found" };
+  }
+
+  const userId = rows[0].userId;
+
+  // Delete from member table
+  await pool.query("DELETE FROM member WHERE id = ?", [id]);
+
+  // Delete from user table
+  await pool.query("DELETE FROM user WHERE id = ?", [userId]);
+
+  return { message: "Member deleted permanently" };
 };
+
 
 
 // member.service.js

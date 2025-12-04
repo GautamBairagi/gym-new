@@ -102,22 +102,30 @@ export const updatePlan = async (req, res, next) => {
   }
 };
 
-
 export const deletePlan = async (req, res, next) => {
   try {
-    const adminId = req.user?.id;  // safe access
+    const planId = Number(req.params.id);
 
-    if (!adminId) {
-      return res.status(401).json({ success: false, message: "Unauthorized: adminId missing" });
+    if (Number.isNaN(planId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid plan ID" });
     }
 
-    await deleteMemberPlan(Number(req.params.id), adminId);
+    await deleteMemberPlan(planId);
 
     res.json({
       success: true,
-      message: "Plan deleted successfully"
+      message: "Plan deleted successfully",
     });
   } catch (err) {
+    // agar custom error hai (404 etc.)
+    if (err.status) {
+      return res
+        .status(err.status)
+        .json({ success: false, message: err.message });
+    }
+
     next(err);
   }
 };
