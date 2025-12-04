@@ -68,11 +68,7 @@ export const getAllSalariesService = async () => {
   `;
 
   const [rows] = await pool.query(sql);
-<<<<<<< HEAD
   return rows;
-=======
-  return rows;
->>>>>>> a5f1dd3143aaba746f0701565fb0aa143e90bbbf
 };
 
 
