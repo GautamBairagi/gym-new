@@ -63,7 +63,7 @@ export const createMemberService = async (data) => {
       email,
       hashedPassword,
       phone || null,
-      3,                  // roleId = 3 = MEMBER
+      4,                  // roleId = 3 = MEMBER
       branchId || null,
       address || null
     ]
