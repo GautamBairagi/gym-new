@@ -13,7 +13,7 @@ export const createMemberService = async (data) => {
     phone,
     planId,
     membershipFrom,
-    dateOfBirth,
+    dob,
     paymentMode,
     amountPaid,
     branchId,
@@ -27,47 +27,68 @@ export const createMemberService = async (data) => {
     throw { status: 400, message: "fullName, email, and password are required" };
   }
 
-  // 1️⃣ HASH THE PASSWORD (ONLY CHANGE YOU WANTED)
+  // HASH PASSWORD
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Check duplicates (email / phone)
-  const [exists] = await pool.query(
-    "SELECT id FROM member WHERE email = ? OR phone = ?",
-    [email, phone || ""]
-  );
-  if (exists.length > 0) throw { status: 400, message: "Member already exists" };
+  // Check duplicate email
+  const [u1] = await pool.query("SELECT id FROM user WHERE email = ?", [email]);
+  const [m1] = await pool.query("SELECT id FROM member WHERE email = ?", [email]);
+  if (u1.length > 0 || m1.length > 0) throw { status: 400, message: "Email already exists" };
 
   // Membership dates
   const startDate = membershipFrom ? new Date(membershipFrom) : new Date();
   let endDate = null;
 
   if (planId) {
-    const [planRows] = await pool.query(
-      "SELECT * FROM plan WHERE id = ?",
-      [planId]
-    );
-    const plan = planRows[0];
-    if (!plan) throw { status: 404, message: "Invalid plan selected" };
+    const [planRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [planId]);
+    if (!planRows.length) throw { status: 404, message: "Invalid plan selected" };
 
-    const durationDays = Number(plan.duration) || 0;
+    const plan = planRows[0];
+
     endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + durationDays);
+    endDate.setDate(endDate.getDate() + Number(plan.duration || 0));
   }
 
-  // Insert member
-  const [result] = await pool.query(
-    `INSERT INTO member
-      (fullName, email, password, phone, planId, membershipFrom, membershipTo, dateOfBirth, paymentMode, amountPaid, branchId, gender, interestedIn, address, adminId, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`,
+  // ---------------------------------------------------
+  // 1️⃣ INSERT INTO USER TABLE (only required fields)
+  // ---------------------------------------------------
+  const [userResult] = await pool.query(
+    `INSERT INTO user 
+      (fullName, email, password, phone, roleId, branchId, address, 
+       description, duration, gymName, planName, price, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, 'Active')`,
     [
       fullName,
       email,
-      hashedPassword,      // 👈 HERE: store hashed password
+      hashedPassword,
+      phone || null,
+      3,                  // roleId = 3 = MEMBER
+      branchId || null,
+      address || null
+    ]
+  );
+
+  const userId = userResult.insertId;
+
+  // ---------------------------------------------------
+  // 2️⃣ INSERT INTO MEMBER TABLE
+  // ---------------------------------------------------
+  const [memberRes] = await pool.query(
+    `INSERT INTO member
+      (userId, fullName, email, password, phone, planId, membershipFrom, membershipTo,
+       dateOfBirth, paymentMode, amountPaid, branchId, gender, interestedIn, address, 
+       adminId, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`,
+    [
+      userId,
+      fullName,
+      email,
+      hashedPassword,
       phone || null,
       planId || null,
       startDate,
       endDate,
-      dateOfBirth ? new Date(dateOfBirth) : null,
+      dob ? new Date(dob) : null,
       paymentMode || null,
       amountPaid ? Number(amountPaid) : 0,
       branchId || null,
@@ -79,14 +100,18 @@ export const createMemberService = async (data) => {
   );
 
   return {
-    id: result.insertId,
-    ...data,
-    password: undefined,   // password ko response me mat bhejna
+    message: "Member created successfully",
+    userId,
+    memberId: memberRes.insertId,
+    fullName,
+    email,
+    branchId,
     membershipFrom: startDate,
     membershipTo: endDate,
     status: "Active"
   };
 };
+
 
 
 /**************************************
