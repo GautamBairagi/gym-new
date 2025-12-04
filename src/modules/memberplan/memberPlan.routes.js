@@ -17,7 +17,9 @@ const router = Router();
 router.get("/", getMemberPlans);          // Get All (current admin ke according)
 router.get("/:id", getMemberPlan);       // Get by ID (current admin ka hi)
 router.post("/", createMemberPlan);      // Create
-router.put("/:id", updatePlan);          // Update
+router.put("/:adminId/:planId", updatePlan);
+
+
 router.delete("/:id", deletePlan);       // Delete
 router.get("/all", getMemberPlansnewss);       // Delete
 

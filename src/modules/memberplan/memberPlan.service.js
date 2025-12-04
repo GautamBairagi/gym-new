@@ -78,34 +78,20 @@ export const getMemberPlanById = async (id) => {
   return plans[0];
 };
 
-/**************************************
- * UPDATE
- **************************************/
-export const updateMemberPlan = async (id, payload) => {
-  const name = payload.name || payload.planName;
-  const sessions = Number(payload.sessions ?? 0);
-  const validityDays = Number(payload.validityDays ?? payload.validity ?? 0);
-  const price = Number(payload.price ?? 0);
+// UPDATE
+// export const updateMemberPlan = async (id, payload) => {
+//   await pool.query(
+//     `UPDATE memberplan 
+//      SET name = ?, sessions = ?, validityDays = ?, price = ?
+//      WHERE id = ?`,
+//     [payload.planName, Number(payload.sessions), Number(payload.validity), Number(payload.price), id]
+//   );
 
-  if (!name) throw { status: 400, message: "Plan name is required" };
+//   const [updated] = await pool.query(`SELECT * FROM memberplan WHERE id = ?`, [id]);
+//   return updated[0];
+// };
 
-  await pool.query(
-    `UPDATE memberplan 
-     SET name = ?, sessions = ?, validityDays = ?, price = ?
-     WHERE id = ?`,
-    [name, sessions, validityDays, price, Number(id)]
-  );
-
-  const [updated] = await pool.query(
-    `SELECT * FROM memberplan WHERE id = ?`,
-    [Number(id)]
-  );
-  return updated[0];
-};
-
-/**************************************
- * DELETE
- **************************************/
+// // DELETE
 export const deleteMemberPlan = async (id) => {
   await pool.query(
     `DELETE FROM memberplan WHERE id = ?`,
@@ -113,3 +99,26 @@ export const deleteMemberPlan = async (id) => {
   );
   return true;
 };
+
+
+export const updateMemberPlan = async (planId, payload, adminId) => {
+  const { planName, sessions, validity, price } = payload;
+
+  const [result] = await pool.query(
+    `UPDATE memberplan 
+     SET name = ?, sessions = ?, validityDays = ?, price = ?
+     WHERE id = ? AND adminId = ?`,
+    [planName, sessions, validity, price, planId, adminId]
+  );
+
+  if (result.affectedRows === 0) return null;
+
+  const [rows] = await pool.query(
+    `SELECT * FROM memberplan WHERE id = ? AND adminId = ?`,
+    [planId, adminId]
+  );
+
+  return rows[0];
+};
+
+

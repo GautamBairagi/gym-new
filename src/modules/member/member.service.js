@@ -35,10 +35,11 @@ export const createMemberService = async (data) => {
   const [m1] = await pool.query("SELECT id FROM member WHERE email = ?", [email]);
   if (u1.length > 0 || m1.length > 0) throw { status: 400, message: "Email already exists" };
 
-  // Membership dates
+  // Membership Start Date
   const startDate = membershipFrom ? new Date(membershipFrom) : new Date();
   let endDate = null;
 
+  // Membership End Date (Based on Plan Duration)
   if (planId) {
     const [planRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [planId]);
     if (!planRows.length) throw { status: 404, message: "Invalid plan selected" };
