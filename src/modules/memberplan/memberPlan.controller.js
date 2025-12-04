@@ -102,14 +102,30 @@ export const updatePlan = async (req, res, next) => {
   }
 };
 
-
 export const deletePlan = async (req, res, next) => {
   try {
-    const adminId = req.user.id;
-    await deleteMemberPlan(Number(req.params.id), adminId);
+    const planId = Number(req.params.id);
 
-    res.json({ success: true, message: "Plan deleted successfully" });
+    if (Number.isNaN(planId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid plan ID" });
+    }
+
+    await deleteMemberPlan(planId);
+
+    res.json({
+      success: true,
+      message: "Plan deleted successfully",
+    });
   } catch (err) {
+    // agar custom error hai (404 etc.)
+    if (err.status) {
+      return res
+        .status(err.status)
+        .json({ success: false, message: err.message });
+    }
+
     next(err);
   }
 };

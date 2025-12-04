@@ -191,16 +191,18 @@ export const updateMemberService = async (id, data) => {
     email = existing.email,
     phone = existing.phone,
     password,
-    planId = existing.planId,
-    membershipFrom = existing.membershipFrom,
-    dateOfBirth = existing.dateOfBirth,
-    paymentMode = existing.paymentMode,
-    amountPaid = existing.amountPaid,
-    branchId = existing.branchId,
-    gender = existing.gender,
-    interestedIn = existing.interestedIn,
-    address = existing.address,
-    adminId = existing.adminId
+    
+    planId,
+    membershipFrom,
+    dateOfBirth,
+    paymentMode,
+    amountPaid,
+    branchId,
+    gender,
+    interestedIn,
+    address,
+    adminId,
+    status  // <-- NEW
   } = data;
 
   // 3️⃣ Hash password only if updating
@@ -209,16 +211,12 @@ export const updateMemberService = async (id, data) => {
     hashedPassword = await bcrypt.hash(password, 10);
   }
 
-  // 4️⃣ Duplicate check for email & phone
-  const [exists] = await pool.query(
-    "SELECT id FROM member WHERE (email = ? OR phone = ?) AND id != ?",
-    [email, phone, id]
-  );
-  if (exists.length > 0) throw { status: 400, message: "Email or phone already exists" };
+  let startDate = membershipFrom ? new Date(membershipFrom) : undefined;
+  let endDate = undefined;
 
   // 5️⃣ Recalculate membershipTo if plan changed
-  let startDate = new Date(membershipFrom);
-  let endDate = existing.membershipTo;
+  // let startDate = new Date(membershipFrom);
+  // let endDate = existing.membershipTo;
 
   if (planId) {
     const [planRows] = await pool.query("SELECT * FROM plan WHERE id = ?", [planId]);
@@ -297,7 +295,8 @@ export const updateMemberService = async (id, data) => {
  * DELETE (SOFT DELETE)
  **************************************/
 export const deleteMemberService = async (id) => {
-  const [[member]] = await pool.query(
+  // Get userId from member table
+  const [rows] = await pool.query(
     "SELECT userId FROM member WHERE id = ?",
     [id]
   );
@@ -306,7 +305,19 @@ export const deleteMemberService = async (id) => {
   await pool.query(`UPDATE member SET status='Inactive' WHERE id=?`, [id]);
   await pool.query(`UPDATE user SET status='Inactive' WHERE id=?`, [member.userId]);
 
-  return { message: "Member deactivated successfully" };
+  if (rows.length === 0) {
+    throw { status: 404, message: "Member not found" };
+  }
+
+  const userId = rows[0].userId;
+
+  // Delete from member table
+  await pool.query("DELETE FROM member WHERE id = ?", [id]);
+
+  // Delete from user table
+  await pool.query("DELETE FROM user WHERE id = ?", [userId]);
+
+  return { message: "Member deleted permanently" };
 };
 
 
