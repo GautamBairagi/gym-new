@@ -92,13 +92,19 @@ export const getMemberPlanById = async (id) => {
 // };
 
 // // DELETE
-export const deleteMemberPlan = async (id) => {
-  await pool.query(
-    `DELETE FROM memberplan WHERE id = ?`,
-    [Number(id)]
+export const deleteMemberPlan = async (id, adminId) => {
+  const [result] = await pool.query(
+    `DELETE FROM memberplan WHERE id = ? AND adminId = ?`,
+    [Number(id), Number(adminId)]
   );
+
+  if (result.affectedRows === 0) {
+    throw { status: 404, message: "Plan not found or not your plan" };
+  }
+
   return true;
 };
+
 
 
 export const updateMemberPlan = async (planId, payload, adminId) => {

@@ -105,10 +105,18 @@ export const updatePlan = async (req, res, next) => {
 
 export const deletePlan = async (req, res, next) => {
   try {
-    const adminId = req.user.id;
+    const adminId = req.user?.id;  // safe access
+
+    if (!adminId) {
+      return res.status(401).json({ success: false, message: "Unauthorized: adminId missing" });
+    }
+
     await deleteMemberPlan(Number(req.params.id), adminId);
 
-    res.json({ success: true, message: "Plan deleted successfully" });
+    res.json({
+      success: true,
+      message: "Plan deleted successfully"
+    });
   } catch (err) {
     next(err);
   }
