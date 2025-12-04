@@ -3,6 +3,8 @@ import { pool } from "../../config/db.js";
 /**************************************
  * CREATE MEMBER
  **************************************/
+import bcrypt from "bcryptjs";
+
 export const createMemberService = async (data) => {
   const {
     fullName,
