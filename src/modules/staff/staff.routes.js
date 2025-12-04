@@ -10,7 +10,7 @@ import {
   deleteStaff,
   getAllStaff
 } from "./staff.controller.js";
-import { verifyToken } from "../../middlewares/auth.js";
+// import { verifyToken } from "../../middlewares/auth.js";
 
 const router = Router();
 
@@ -19,7 +19,7 @@ const router = Router();
  */
 router.post(
   "/create",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   createStaff
 );
 
@@ -31,7 +31,7 @@ router.get("/all",getAllStaff);
  */
 router.get(
   "/branch/:branchId",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   (req, res, next) => {
     if (req.user.role === "Admin") {
       // Force admin to their own branch
@@ -48,7 +48,7 @@ router.get(
  */
 router.get(
   "/detail/:id",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   (req, res, next) => {
     req.checkBranch = true; // custom flag for controller -> optional use
     next();
@@ -70,7 +70,7 @@ router.put(
  */
 router.delete(
   "/delete/:id",
-  verifyToken(["Superadmin", "Admin"]),
+  // verifyToken(["Superadmin", "Admin"]),
   deleteStaff
 );
 
