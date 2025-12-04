@@ -25,56 +25,68 @@ export const createMemberService = async (data) => {
     throw { status: 400, message: "fullName, email, and password are required" };
   }
 
-  // Check duplicates (email / phone)
+  // Check if member already exists
   const [exists] = await pool.query(
     "SELECT id FROM member WHERE email = ? OR phone = ?",
     [email, phone || ""]
   );
   if (exists.length > 0) throw { status: 400, message: "Member already exists" };
 
-  // Membership dates
+  // Membership Start Date
   const startDate = membershipFrom ? new Date(membershipFrom) : new Date();
   let endDate = null;
 
+  // Membership End Date (Based on Plan Duration)
   if (planId) {
     const [planRows] = await pool.query(
       "SELECT * FROM plan WHERE id = ?",
       [planId]
     );
+
     const plan = planRows[0];
     if (!plan) throw { status: 404, message: "Invalid plan selected" };
 
     const durationDays = Number(plan.duration) || 0;
+
     endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + durationDays);
   }
 
-  // Insert member
+  // 🔥 INSERT with Correct Status = 'ACTIVE'
   const [result] = await pool.query(
-  `INSERT INTO member
-    (fullName, email, password, phone, planId, membershipFrom, membershipTo, dateOfBirth, paymentMode, amountPaid, branchId, gender, interestedIn, address, adminId, status)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`,
-  [
-    fullName,
-    email,
-    password, // plaintext or hash depending on requirement
-    phone || null,
-    planId || null,
-    startDate,
-    endDate,
-    dateOfBirth ? new Date(dateOfBirth) : null,
-    paymentMode || null,
-    amountPaid ? Number(amountPaid) : 0,
-    branchId || null,
-    gender || null,
-    interestedIn || null,
-    address || null,  // <-- comma here
-    adminId || null   // <-- last item
-  ]
-);
+    `INSERT INTO member
+      (fullName, email, password, phone, planId, membershipFrom, membershipTo, dateOfBirth, 
+       paymentMode, amountPaid, branchId, gender, interestedIn, address, adminId, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`,
+    [
+      fullName,
+      email,
+      password, // hashed or plaintext based on your controller
+      phone || null,
+      planId || null,
+      startDate,
+      endDate,
+      dateOfBirth ? new Date(dateOfBirth) : null,
+      paymentMode || null,
+      amountPaid ? Number(amountPaid) : 0,
+      branchId || null,
+      gender || null,
+      interestedIn || null,
+      address || null,
+      adminId || null
+    ]
+  );
 
-  return { id: result.insertId, ...data, membershipFrom: startDate, membershipTo: endDate, status: "Active" };
+  // Return Saved Data
+  return { 
+    id: result.insertId, 
+    ...data, 
+    membershipFrom: startDate, 
+    membershipTo: endDate, 
+    status: "ACTIVE" 
+  };
 };
+
 
 /**************************************
  * LIST MEMBERS
