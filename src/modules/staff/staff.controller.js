@@ -95,20 +95,6 @@ export const listStaff = async (req, res, next) => {
   }
 };
 
-// export const staffDetail = async (req, res, next) => {
-//   try {
-//     const id = parseInt(req.params.id);
-//     const staff = await staffDetailService(id);
-
-//     res.json({
-//       success: true,
-//       staff,
-//     });
-//   } catch (err) {
-//     next(err);
-//   }
-// };
-
 
 export const staffDetail = async (req, res, next) => {
   try {

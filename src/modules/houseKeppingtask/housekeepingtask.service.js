@@ -1,3 +1,7 @@
+
+
+
+
 import { pool } from "../../config/db.js";
 
 /**************************************
@@ -6,26 +10,25 @@ import { pool } from "../../config/db.js";
 export const createTaskService = async (data) => {
   const {
     category,
-    title,
+    taskTitle,
     description,
-    assignedTo
+    createdById
   } = data;
 
   const [result] = await pool.query(
-    `INSERT INTO housekeepingTask
-      (category, title, description, assignedTo)
-     VALUES (?, ?, ?, ?)`,
+    `INSERT INTO HousekeepingTasks
+      (category, taskTitle, description, status, dutyDate, createdById)
+     VALUES (?, ?, ?, 'Pending', CURDATE(), ?)`,
     [
       category,
-      title,
+      taskTitle,
       description || null,
-      assignedTo ? Number(assignedTo) : null
+      Number(createdById)
     ]
   );
 
-  // naya record wapas bhej dete hain
   const [rows] = await pool.query(
-    `SELECT * FROM housekeepingTask WHERE id = ?`,
+    `SELECT * FROM HousekeepingTasks WHERE id = ?`,
     [result.insertId]
   );
 
@@ -36,9 +39,8 @@ export const createTaskService = async (data) => {
  * GET ALL TASKS
  **************************************/
 export const getAllTasksService = async () => {
-  // Simple list – agar staff join chahiye ho to yaha JOIN add kar sakte ho
   const [rows] = await pool.query(
-    `SELECT * FROM housekeepingTask
+    `SELECT * FROM HousekeepingTasks
      ORDER BY id DESC`
   );
 
@@ -50,8 +52,9 @@ export const getAllTasksService = async () => {
  **************************************/
 export const getTaskByIdService = async (id) => {
   const [rows] = await pool.query(
-    `SELECT * FROM housekeepingTask
+    `SELECT * FROM HousekeepingTasks
      WHERE id = ?`,
+
     [Number(id)]
   );
 
@@ -63,14 +66,13 @@ export const getTaskByIdService = async (id) => {
 };
 
 /**************************************
- * UPDATE TASK (partial update – Prisma jaisa)
+ * UPDATE TASK
  **************************************/
 export const updateTaskService = async (id, data) => {
   const taskId = Number(id);
 
-  // Pehle existing record nikal lo
   const [existingRows] = await pool.query(
-    `SELECT * FROM housekeepingTask WHERE id = ?`,
+    `SELECT * FROM HousekeepingTasks WHERE id = ?`,
     [taskId]
   );
 
@@ -80,38 +82,29 @@ export const updateTaskService = async (id, data) => {
 
   const existing = existingRows[0];
 
-  // Prisma me "field ?? undefined" ka matlab:
-  // agar field aya hai to use karo, warna purani value rehne do
   const category = data.category ?? existing.category;
-  const title = data.title ?? existing.title;
+  const taskTitle = data.taskTitle ?? existing.taskTitle;
   const description = data.description ?? existing.description;
   const status = data.status ?? existing.status;
-  const assignedTo =
-    data.assignedTo !== undefined && data.assignedTo !== null
-      ? Number(data.assignedTo)
-      : existing.assignedTo;
 
   await pool.query(
-    `UPDATE housekeepingTask SET
+    `UPDATE HousekeepingTasks SET
       category = ?,
-      title = ?,
+      taskTitle = ?,
       description = ?,
-      status = ?,
-      assignedTo = ?
+      status = ?
      WHERE id = ?`,
     [
       category,
-      title,
+      taskTitle,
       description,
       status,
-      assignedTo,
       taskId
     ]
   );
 
-  // updated record wapas bhej do
   const [rows] = await pool.query(
-    `SELECT * FROM housekeepingTask WHERE id = ?`,
+    `SELECT * FROM HousekeepingTasks WHERE id = ?`,
     [taskId]
   );
 
@@ -123,7 +116,7 @@ export const updateTaskService = async (id, data) => {
  **************************************/
 export const deleteTaskService = async (id) => {
   await pool.query(
-    `DELETE FROM housekeepingTask
+    `DELETE FROM HousekeepingTasks
      WHERE id = ?`,
     [Number(id)]
   );
@@ -132,15 +125,15 @@ export const deleteTaskService = async (id) => {
 };
 
 /**************************************
- * FILTER TASKS BY STAFF (assignedTo)
+ * FILTER TASKS BY CATEGORY
  **************************************/
-export const getTasksByStaffService = async (staffId) => {
+export const getTasksByCategoryService = async (category) => {
   const [rows] = await pool.query(
     `SELECT *
-     FROM housekeepingTask
-     WHERE assignedTo = ?
+     FROM HousekeepingTasks
+     WHERE category = ?
      ORDER BY id DESC`,
-    [Number(staffId)]
+    [category]
   );
 
   return rows;
