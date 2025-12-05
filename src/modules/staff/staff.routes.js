@@ -1,6 +1,3 @@
-
-
-
 import { Router } from "express";
 import {
   createStaff,
@@ -32,13 +29,7 @@ router.get("/all",getAllStaff);
 router.get(
   "/branch/:branchId",
   // verifyToken(["Superadmin", "Admin"]),
-  (req, res, next) => {
-    if (req.user.role === "Admin") {
-      // Force admin to their own branch
-      req.params.branchId = req.user.branchId.toString();
-    }
-    next();
-  },
+
   listStaff
 );
 

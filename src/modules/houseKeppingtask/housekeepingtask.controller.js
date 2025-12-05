@@ -1,15 +1,30 @@
+
+
+
 import {
   createTaskService,
   getAllTasksService,
   getTaskByIdService,
   updateTaskService,
   deleteTaskService,
-  getTasksByStaffService
-} from "./housekeeping.service.js";
+  getTasksByCategoryService
+} from "./housekeepingtask.service.js";   // 🔥 correct file name
 
 export const createTask = async (req, res) => {
   try {
-    const task = await createTaskService(req.body);
+    const createdById = req.user?.id;
+
+    if (!createdById) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID (createdById) missing — login required"
+      });
+    }
+
+    const task = await createTaskService({
+      ...req.body,
+      createdById
+    });
 
     res.status(201).json({
       success: true,
@@ -17,9 +32,13 @@ export const createTask = async (req, res) => {
       data: task,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.sqlMessage || error.message
+    });
   }
 };
+
 
 export const getAllTasks = async (req, res) => {
   try {
@@ -33,7 +52,6 @@ export const getAllTasks = async (req, res) => {
 export const getTaskById = async (req, res) => {
   try {
     const task = await getTaskByIdService(req.params.id);
-
     res.json({ success: true, data: task });
   } catch (error) {
     res.status(404).json({ success: false, message: error.message });
@@ -43,7 +61,6 @@ export const getTaskById = async (req, res) => {
 export const updateTask = async (req, res) => {
   try {
     const updated = await updateTaskService(req.params.id, req.body);
-
     res.json({
       success: true,
       message: "Task updated successfully!",
@@ -57,7 +74,6 @@ export const updateTask = async (req, res) => {
 export const deleteTask = async (req, res) => {
   try {
     await deleteTaskService(req.params.id);
-
     res.json({
       success: true,
       message: "Task deleted successfully!"
@@ -67,10 +83,9 @@ export const deleteTask = async (req, res) => {
   }
 };
 
-export const getTasksByStaff = async (req, res) => {
+export const getTasksByCategory = async (req, res) => {
   try {
-    const tasks = await getTasksByStaffService(req.params.staffId);
-
+    const tasks = await getTasksByCategoryService(req.params.category);
     res.json({
       success: true,
       data: tasks

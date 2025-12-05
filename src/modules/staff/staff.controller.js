@@ -25,12 +25,29 @@ export const createStaff = async (req, res, next) => {
       joinDate,
       exitDate,
       profilePhoto,
+      adminId: adminIdFromBody,   // 👈 body se adminId lo
     } = req.body;
 
-    // logged in admin ID
-    const adminId = req.user.id;
+    // logged in admin ID (agar token se aa raha ho to use karo, warna body se)
+    const adminId = req.user?.id || adminIdFromBody;
 
-    if (!fullName || !email || !password || !roleId || !branchId || !gender || !dateOfBirth || !joinDate) {
+    if (!adminId) {
+      return res.status(400).json({
+        success: false,
+        message: "adminId is required (token ya body se)",
+      });
+    }
+
+    if (
+      !fullName ||
+      !email ||
+      !password ||
+      !roleId ||
+      !branchId ||
+      !gender ||
+      !dateOfBirth ||
+      !joinDate
+    ) {
       return res.status(400).json({
         success: false,
         message: "Required fields missing",
@@ -46,7 +63,7 @@ export const createStaff = async (req, res, next) => {
       password: hashedPassword,
       roleId,
       branchId,
-      adminId,         // 👈 important
+      adminId, // ✅ ab hamesha value hogi
       gender,
       dateOfBirth,
       joinDate,
@@ -77,20 +94,6 @@ export const listStaff = async (req, res, next) => {
     next(err);
   }
 };
-
-// export const staffDetail = async (req, res, next) => {
-//   try {
-//     const id = parseInt(req.params.id);
-//     const staff = await staffDetailService(id);
-
-//     res.json({
-//       success: true,
-//       staff,
-//     });
-//   } catch (err) {
-//     next(err);
-//   }
-// };
 
 
 export const staffDetail = async (req, res, next) => {
