@@ -303,3 +303,34 @@ export const loginMemberService = async ({ email, password }) => {
     }
   };
 };
+
+/**************************************
+ * CHANGE PASSWORD
+ **************************************/
+export const changeUserPassword = async (id, oldPassword, newPassword) => {
+  // 1. Fetch user first
+  const [rows] = await pool.query("SELECT * FROM user WHERE id = ?", [id]);
+  const user = rows[0];
+
+  if (!user) {
+    throw { status: 404, message: "User not found" };
+  }
+
+  // 2. Compare old password
+  const match = await bcrypt.compare(oldPassword, user.password);
+  if (!match) {
+    throw { status: 400, message: "Old password is incorrect" };
+  }
+
+  // 3. Hash new password
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // 4. Update password
+  await pool.query(
+    "UPDATE user SET password = ? WHERE id = ?",
+    [hashedPassword, id]
+  );
+
+  return { message: "Password updated successfully" };
+};
+

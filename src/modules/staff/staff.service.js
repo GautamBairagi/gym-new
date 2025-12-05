@@ -162,6 +162,31 @@ export const updateStaffService = async (staffId, data) => {
 
 
 
+export const getAllStaffService = async () => {
+  const sql = `
+    SELECT 
+      s.id AS staffId,
+      u.id AS userId,
+      u.fullName,
+      u.email,
+      u.phone,
+      u.roleId,
+      u.branchId,
+      s.adminId,
+      s.gender,
+      s.dateOfBirth,
+      s.joinDate,
+      s.exitDate,
+      s.profilePhoto,
+      u.status
+    FROM staff s
+    JOIN user u ON u.id = s.userId
+    ORDER BY s.id DESC
+  `;
+
+  const [rows] = await pool.query(sql);
+  return rows;
+};
 
 
 
@@ -180,4 +205,31 @@ export const deleteStaffService = async (id) => {
   );
 
   return { message: "Staff deactivated successfully" };
+};
+
+
+export const getAdminStaffService = async (adminId) => {
+  const sql = `
+    SELECT 
+      s.id AS staffId,
+      u.id AS userId,
+      u.fullName,
+      u.email,
+      u.phone,
+      u.roleId,
+      u.branchId,
+      s.gender,
+      s.dateOfBirth,
+      s.joinDate,
+      s.exitDate,
+      s.profilePhoto,
+      u.status AS userStatus   -- important!
+    FROM staff s
+    JOIN user u ON u.id = s.userId
+    WHERE s.adminId = ?
+    ORDER BY s.id DESC
+  `;
+
+  const [rows] = await pool.query(sql, [adminId]);
+  return rows;
 };
