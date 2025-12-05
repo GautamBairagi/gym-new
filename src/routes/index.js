@@ -47,6 +47,7 @@ router.use("/staff", staffRoutes);
 router.use("/members", memberRoutes);
 router.use("/plans", planRoutes);
 router.use("/attendance", attendanceRoutes);
+router.use("/memberattendence", attendanceRoutes);
 router.use("/class", classRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/dashboard", dashboardRoutes);
