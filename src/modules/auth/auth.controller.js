@@ -1,6 +1,6 @@
 import { registerUser, loginUser , fetchUserById,
   modifyUser,
-  removeUser, fetchAdmins, fetchDashboardStats, loginMemberService} from "./auth.service.js";
+  removeUser, fetchAdmins, fetchDashboardStats, loginMemberService,changeUserPassword} from "./auth.service.js";
 
 
 
@@ -131,11 +131,11 @@ export const loginMember = async (req, res, next) => {
 
 export const changePasswordController = async (req, res, next) => {
   try {
-    const id = req.user.id; // from JWT middleware
-    const { oldPassword, newPassword } = req.body;
+    // const id = req.user.id; // from JWT middleware
+    const { oldPassword, newPassword,id } = req.body;
 
-    if (!oldPassword || !newPassword) {
-      return res.status(400).json({ success: false, message: "Old & new password required" });
+    if (!oldPassword || !newPassword || !id) {
+      return res.status(400).json({ success: false, message: "Old & new password required & id" });
     }
 
     const result = await changeUserPassword(id, oldPassword, newPassword);
