@@ -4,22 +4,31 @@ import { pool } from "../../config/db.js";
  * CLASS TYPES
  **************************************/
 export const createClassTypeService = async (name) => {
-  const [[exists]] = await pool.promise().query(
-    "SELECT * FROM classtype WHERE name = ?",
-    [name]
-  );
-  if (exists) throw { status: 400, message: "Class type exists" };
-
-  const [result] = await pool.promise().query(
+  const [result] = await pool.query(
     "INSERT INTO classtype (name) VALUES (?)",
     [name]
   );
+};
 
-  return { id: result.insertId, name };
+export const getTrainersService = async () => {
+  const [rows] = await pool.query(
+    `SELECT 
+        u.id,
+        u.fullName,
+        u.email,
+        u.phone,
+        u.branchId,
+        u.roleId
+     FROM user u
+     JOIN role r ON u.roleId = r.id
+     WHERE r.name = 'Trainer'`
+  );
+
+  return rows;
 };
 
 export const listClassTypesService = async () => {
-  const [rows] = await pool.promise().query(
+  const [rows] = await pool.query(
     "SELECT * FROM classtype ORDER BY id DESC"
   );
   return rows;

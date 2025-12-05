@@ -9,17 +9,28 @@ import {
   getAllScheduledClassesService,
   getScheduleByIdService,
   updateScheduleService,
-  deleteScheduleService
+  deleteScheduleService,
+   getTrainersService
 } from "./class.service.js";
 
 export const createClassType = async (req, res, next) => {
   try {
-    const r = await createClassTypeService(req.body.name);
+    const r = await createClassTypeService(req.body.name); // ← yaha se sirf name ja raha hai
     res.json({ success: true, classType: r });
   } catch (err) {
     next(err);
   }
 };
+
+export const getTrainers = async (req, res, next) => {
+  try {
+    const trainers = await getTrainersService();
+    res.json({ success: true, trainers });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 export const listClassTypes = async (req, res, next) => {
   try {
